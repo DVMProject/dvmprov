@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en" data-bs-theme="dark">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>DVM Provisioning Manager</title>
+    <!-- Core Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <!-- Custom Stylesheet -->
+    <link href="custom.css" rel="stylesheet">
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+</head>
+
+<body>
+    <template id="spinner-small">
+        <div class="spinner-border spinner-border-sm" role="status">
+        </div>
+    </template>
+    <!-- Navbar -->
+    <nav class="navbar fixed-top bg-body-secondary">
+        <div class="container-fluid">
+            <!-- Site Title (Home Link)-->
+            <a class="navbar-brand" href="#">
+                <img src="images/fne.png" alt="Logo" height="32" class="d-inline-block align-text-top">
+                &nbsp;DVM Provisioning Manager
+            </a>
+            <!-- Connect Button -->
+            <div class="d-flex">
+                <input class="form-control me-2" type="text" placeholder="127.0.0.1" aria-label="FNE address"
+                    data-bs-toggle="tooltip" data-bs-placement="bottom" title="FNE address" id="inputFneAddress">
+                <button class="btn btn-outline-success" id="btnFneConnect" onclick="btnFneConnect(this)"
+                    data-bs-toggle="tooltip" data-bs-placement="bottom" title="Connect to FNE">Connect</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Page Content -->
+    <div class="container-fluid" style="padding-top: 59px; height: 100%">
+        <div class="row" style="height: 100%;">
+
+            <!-- Sidebar -->
+            <div class="d-flex flex-column flex-shrink-0 bg-body-tertiary" style="width: 3.5rem; padding:0;"
+                id="nav-side">
+                <ul class="nav nav-pills nav-flush flex-column mb-auto text-center">
+                    <!-- Home -->
+                    <li class="nav-item">
+                        <a class="nav-link active py-3 border-bottom rounded-0" href="#" data-bs-toggle="tooltip"
+                            data-bs-placement="right" title="Home" onclick="page(this)" data-page="pageHome">
+                            <ion-icon name="home-sharp"></ion-icon>
+                        </a>
+                    </li>
+                    <!-- RIDs -->
+                    <li class="nav-item">
+                        <a class="nav-link py-3 border-bottom rounded-0" href="#" data-bs-toggle="tooltip"
+                            data-bs-placement="right" title="Radio IDs" onclick="page(this)" data-page="pageRIDs">
+                            <ion-icon name="people-sharp"></ion-icon>
+                        </a>
+                    </li>
+                    <!-- Routing Rules -->
+                    <li class="nav-item">
+                        <a class="nav-link py-3 border-bottom rounded-0" href="#" data-bs-toggle="tooltip"
+                            data-bs-placement="right" title="Routing Rules" onclick="page(this)" data-page="pageRules">
+                            <ion-icon name="swap-horizontal-sharp"></ion-icon>
+                        </a>
+                    </li>
+                    <!-- Peers -->
+                    <li class="nav-item">
+                        <a class="nav-link py-3 border-bottom rounded-0" href="#" data-bs-toggle="tooltip"
+                            data-bs-placement="right" title="Peers" onclick="page(this)" data-page="pagePeers">
+                            <ion-icon name="server-sharp"></ion-icon>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-----------------------------------
+                Homepage
+            ------------------------------------->
+
+            <!-- TODO: Make this -->
+            <div class="col p-3 page" id="pageHome">
+                <h3>Dashboard</h3>
+                <hr>
+                <h5>Welcome to the DVM Provisioning Manager!</h5>
+                <p>To start, enter the address of your FNE server in the address bar at the top left. The address will be saved locally and this page will then automatically reconnect.</p>
+            </div>
+
+            <!-----------------------------------
+                RID Management Page & Modals
+            ------------------------------------->
+            <div class="col p-3 page" id="pageRIDs" style="display: none;">
+                <h3>Radio ID Management</h3>
+                <hr>
+                <!-- RID Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover" id="ut">
+                        <thead>
+                            <tr>
+                                <th scope="col">RID</th>
+                                <th scope="col">Enabled</th>
+                                <th scope="col">Alias</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ut-body">
+                            <template id="utr-template">
+                                <tr>
+                                    <td class="ut-rid"></td>
+                                    <td class="ut-enabled fs-4"></td>
+                                    <td class="ut-alias"></td>
+                                    <td>
+                                        <div class="btn-group" role="group" aria-label="RID actions">
+                                            <button type="button" class="btn btn-danger" data-bs-toggle="tooltip"
+                                                data-bs-placement="top" title="Delete" onclick="ridPromptDelete(this)">
+                                                <ion-icon name="trash-bin-sharp"></ion-icon>
+                                            </button>
+                                            <button type="button" class="btn btn-primary" data-bs-toggle="tooltip"
+                                                data-bs-placement="top" title="Edit" onclick="ridPromptEdit(this)">
+                                                <ion-icon name="settings-sharp"></ion-icon>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                            <div class="spinner-border" role="status" id="spinnerTable">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Add RID Button -->
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalRidAdd">
+                    <ion-icon name="add-circle-sharp"></ion-icon>
+                    Add
+                </button>
+            </div>
+
+            <!-- Add/Edit RID Modal -->
+            <div class="modal fade" id="modalRidAdd">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit RID</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form>
+                                <div class="mb-3">
+                                    <label for="addRidFormRID" class="form-label">Radio ID</label>
+                                    <input type="number" class="form-control" id="addRidFormRID">
+                                    <div class="invalid-feedback">Radio ID invalid</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="addRidFormCall" class="form-label">Alias</label>
+                                    <input type="text" class="form-control" id="addRidFormAlias">
+                                    <div class="invalid-feedback">Callsign invalid</div>
+                                </div>
+                                <div class="mb-3">
+                                    <input class="form-check-input" type="checkbox" value="" id="addRidFormEnabled">
+                                    <label for="addRidFormEnabled" class="form-check-label">Enabled</label>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                                onclick="clearRidForm()">Cancel</button>
+                            <button type="button" class="btn btn-primary" onclick="addRidForm()">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delete RID Confirm Modal -->
+            <div class="modal fade" id="modalRidDelete">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Delete RID</h5>
+                        </div>
+                        <div class="modal-body">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                                onclick="cancelRidDelete()">Cancel</button>
+                            <button type="button" class="btn btn-danger">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-----------------------------------
+                Rule Management Page & Modals
+            ------------------------------------->
+            
+            <div class="col p-3 page" id="pageRules" style="display: none;">
+                <h2>Routing Rules</h2>
+                <hr>
+            </div>
+
+            <!-----------------------------------
+                Peer Management Page & Modals
+            ------------------------------------->
+
+            <div class="col p-3 page" id="pagePeers" style="display: none;">
+                <h2>Peer Connections</h2>
+                <hr>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Core Bootstrap Javascript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+    <!-- JQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <!-- Ion Icons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+    <!-- Main Script -->
+    <script src="js/index.js"></script>
+</body>
+
+</html>
