@@ -2,3 +2,23 @@ body, html {
     height: 100vh;
     width: 100vw;
 }
+
+.sidebar-button {
+    font-size: 1.25rem;
+    padding: 0.8rem;
+}
+
+.table-header i {
+    width: 24px;
+    padding-left: 8px;
+    margin-bottom: 0;
+}
+
+.table-header i,
+.table-header span {
+    vertical-align: middle!important;
+}
+
+i.unsorted {
+    color: gray;
+}

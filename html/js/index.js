@@ -3,8 +3,7 @@
  *******************************************************/
 
 var config = {
-    fneAddress: null,
-    lastPage: "pageHome"
+    lastPage: null
 }
 
 function loadConfig() {
@@ -69,6 +68,70 @@ function page(obj) {
 }
 
 /*******************************************************
+ * Table Sorting Functions
+ * https://stackoverflow.com/a/19947532/1842613
+ *******************************************************/
+
+function clearSort(table) {
+    // Remove the sort property
+    table.find('th').attr({
+        "data-sort": "none"
+    });
+    // Reset sort
+    table.find('th i').removeClass().addClass("iconoir-sort unsorted");
+}
+
+function clickSort(header) {
+    // Get the table
+    var table = $(header).parents('table').eq(0);
+    // Set sort mode
+    if (header.dataset.sort == "asc") {
+        clearSort(table);
+        header.dataset.sort = "desc";
+    }
+    else {
+        clearSort(table);
+        header.dataset.sort = "asc";
+    }
+    // Sort
+    sortTable(table, header);
+}
+
+function sortTable(table, header) {
+    // Sort rows
+    var rows = $(table).find('tr:gt(0)').toArray().sort(comparer($(header).index()))
+
+    // Set sort icon
+    if (header.dataset.sort == "asc") {
+        $(header).find("i").removeClass("iconoir-sort unsorted").addClass("iconoir-sort-up");
+    }
+    else {
+        $(header).find("i").removeClass("iconoir-sort unsorted").addClass("iconoir-sort-down");
+    }
+    
+    // Reorder depending on mode
+    if (header.dataset.sort == "desc") {
+        rows = rows.reverse()
+    }
+
+    // Add the new rows
+    for (var i = 0; i < rows.length; i++) {
+        table.append(rows[i])
+    }
+}
+
+function comparer(index) {
+    return function(a, b) {
+        var valA = getCellValue(a, index), valB = getCellValue(b, index);
+        return $.isNumeric(valA) && $.isNumeric(valB) ? valA - valB : valA.toString().localeCompare(valB);
+    }
+}
+
+function getCellValue(row, index) {
+    return $(row).children('td').eq(index).html();
+}
+
+/*******************************************************
  * RID Management Page Functions
  *******************************************************/
 
@@ -76,19 +139,20 @@ const ridTable = $("#ut-body");
 const ridRowTemplate = $("#utr-template");
 
 // Add table row for RID
-function addRidToTable(rid, enabled) {
+function addRidToTable(rid, enabled, alias) {
     const newRow = $(ridRowTemplate.html());
     newRow.find('.ut-rid').html(rid);
+    newRow.find('.ut-alias').html(alias);
     //tds[1].textContent = callsign;
     //tds[2].textContent = operator;
     if (enabled)
     {
-        newRow.find('.ut-enabled').html('<ion-icon name="checkmark-circle-sharp"></ion-icon>');
+        newRow.find('.ut-enabled').html('<i class="iconoir-check-circle-solid"></i>');
         newRow.find('.ut-enabled').addClass('text-success');
     }
     else
     {
-        newRow.find('.ut-enabled').html('<ion-icon name="close-circle-sharp"></ion-icon>');
+        newRow.find('.ut-enabled').html('<i class="iconoir-xmark-circle-solid"></i>');
         newRow.find('.ut-enabled').addClass('text-danger');
     }
 
@@ -100,7 +164,7 @@ function addRidToTable(rid, enabled) {
 
 function updateRidTable() {
     // Clear table
-    $("#ut-body td").remove();
+    $("#ut-body tr").remove();
     // Show loading spinner
     $("#spinnerTable").show();
     // Query
@@ -111,10 +175,14 @@ function updateRidTable() {
         success: function (data) {
             console.log("Got new rid data")
             data.rids.forEach(entry => {
-                addRidToTable(entry.id, entry.enabled);
+                addRidToTable(entry.id, entry.enabled, entry.alias);
             });
             // Hide the loading spinner
-            $("#spinnerTable").hide();
+            $("#ridSpinnerTable").hide();
+            // Sort
+            const table = $("#ut");
+            const header = document.querySelectorAll("#ut th")[0];
+            sortTable(table, header);
         }
     })
 }
@@ -176,8 +244,6 @@ function addRidForm() {
         enabled: enabled,
     }
 
-    console.log(postData);
-
     // Send the data and verify success
     $.post("php/ridAdd.php",
     postData,
@@ -214,8 +280,9 @@ function ridPromptEdit(element) {
 
 function ridPromptDelete(element) {
     const delRid = $(element).closest("tr").find(".ut-rid").text();
+    const delAlias = $(element).closest("tr").find(".ut-alias").text();
     // Update the delete modal text
-    $("#modalRidDelete").find(".modal-body").html(`Delete RID ${delRid}?`);
+    $("#modalRidDelete").find(".modal-body").html(`Delete RID ${delRid} (${delAlias})?`);
     // Update the delete function onclick
     $("#modalRidDelete").find(".btn-danger").click(() => {
         deleteRid(delRid);
@@ -252,6 +319,147 @@ function deleteRid(delRid) {
 }
 
 /*******************************************************
+ * TG Management Page Functions
+ *******************************************************/
+
+const tgTable = $("#tgt-body");
+const tgRowTemplate = $("#tgtr-template");
+
+// Add table row for TG
+function addTgToTable(tgid, slot, name, active, affiliated) {
+    const newRow = $(tgRowTemplate.html());
+    newRow.find('.tgt-tgid').html(tgid);
+    newRow.find('.tgt-slot').html(slot);
+    newRow.find('.tgt-name').html(name);
+    // Active Checkmark
+    if (active)
+    {
+        newRow.find('.tgt-active').html('<i class="iconoir-check-circle-solid"></i>');
+        newRow.find('.tgt-active').addClass('text-success');
+    }
+    else
+    {
+        newRow.find('.tgt-active').html('<i class="iconoir-xmark-circle-solid"></i>');
+        newRow.find('.tgt-active').addClass('text-danger');
+    }
+    // Affiliated Checkmark
+    if (affiliated)
+    {
+        newRow.find('.tgt-affiliated').html('<i class="iconoir-check-circle-solid"></i>');
+        newRow.find('.tgt-affiliated').addClass('text-primary');
+    }
+    else
+    {
+        newRow.find('.tgt-affiliated').html('<i class="iconoir-xmark-circle-solid"></i>');
+        newRow.find('.tgt-affiliated').addClass('text-secondary');
+    }
+
+    tgRowTemplate.before(newRow);
+
+    // Enable the tooltips on the buttons
+    enableTooltips();
+}
+
+function updateTgTable() {
+    // Clear table
+    $("#tgt-body tr").remove();
+    // Show loading spinner
+    $("#spinnerTable").show();
+    // Query
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        url: "php/tgGet.php",
+        success: function (data) {
+            console.log("Got new TG data")
+            data.tgs.forEach(entry => {
+                addTgToTable(entry.source.tgid, entry.source.slot, entry.name, entry.config.active, entry.config.affiliated);
+            });
+            // Hide the loading spinner
+            $("#tgSpinnerTable").hide();
+            // Sort
+            var table = $("#tgt");
+            var header = document.querySelectorAll("#tgt th")[0];
+            sortTable(table, header);
+        }
+    })
+}
+
+function getTgInfo(tgid, slot) {
+    // Show loading spinner
+    $("#tgSpinnerInfo").show();
+    // Query list of tgs
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        url: "php/tgGet.php",
+        success: function (data) {
+            data.tgs.forEach(entry => {
+                // Find the TGID we're looking for
+                if (Number(entry.source.tgid) == Number(tgid) && Number(entry.source.slot) == Number(slot)) {
+                    // Populate the tg info box
+                    $("#tgInfoBox").html(JSON.stringify(entry, null, 2));
+                    // Hide the spinner
+                    $("#tgSpinnerInfo").hide();
+                } 
+            });
+        }
+    })
+}
+
+function clearTgInfo() {
+    $("#tgInfoBox").html("");
+}
+
+function tgPromptDelete(element) {
+    const delTgid = $(element).closest("tr").find(".tgt-tgid").text();
+    const delName = $(element).closest("tr").find(".tgt-name").text();
+    // Update the delete modal text
+    $("#modalTgDelete").find(".modal-body").html(`Delete TGID ${delTgid} (${delName})?`);
+    // Update the delete function onclick
+    $("#modalTgDelete").find(".btn-danger").click(() => {
+        deleteTg(delTgid);
+    });
+
+    // Show the modal
+    $("#modalTgDelete").modal('show');
+}
+
+function cancelTgDelete() {
+    $("#modalTgDelete").find(".modal-body").html('');
+    $("#modalTgDelete").find(".btn-danger").prop('onclick', null).off('click');
+}
+
+/**
+ * Delete the specified RID from the table
+ * @param {int} delTgid RID to delete
+ */
+function deleteTg(delTgid) {
+    $.post("php/tgDel.php",
+    {
+        tgid: parseInt(delTgid)
+    },
+    function (data, status) {
+        if (data.status == 200) {
+            console.log(`Successfully deleted TGID ${delTgid}`);
+            $("#modalTgDelete").modal('hide');
+            updateTgTable();
+        } else {
+            console.error("Failed to delete TGID: " + data);
+            alert("Failed to delete TGID");
+        }
+    });
+}
+
+function tgPromptInfo(element) {
+    const infoTgid = $(element).closest("tr").find(".tgt-tgid").text();
+    const infoSlot = $(element).closest("tr").find(".tgt-slot").text();
+    const tgInfo = getTgInfo(parseInt(infoTgid), parseInt(infoSlot));
+    // Show info modal
+    $("#modalTgInfo").modal('show');
+}
+
+/*******************************************************
  * Window Onload
  *******************************************************/
 
@@ -262,4 +470,5 @@ window.onload = () => {
     loadConfig();
     // Load initial data
     updateRidTable();
+    updateTgTable();
 }

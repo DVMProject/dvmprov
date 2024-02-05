@@ -85,7 +85,6 @@ class RestApi
         curl_setopt($this->curl, CURLOPT_HTTPHEADER, $http_headers);
         curl_setopt($this->curl, CURLINFO_HEADER_OUT, true);
         curl_setopt($this->curl, CURLOPT_URL, $url);
-        
 
         $result = curl_exec($this->curl);
 
