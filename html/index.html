@@ -44,7 +44,7 @@
                 <ul class="nav nav-pills nav-flush flex-column mb-auto text-center">
                     <!-- Home -->
                     <li class="nav-item">
-                        <a class="nav-link active border-bottom rounded-0 sidebar-button" href="#" data-bs-toggle="tooltip"
+                        <a class="nav-link border-bottom rounded-0 sidebar-button" href="#" data-bs-toggle="tooltip"
                             data-bs-placement="right" title="Home" onclick="page(this)" data-page="pageHome">
                             <i class="iconoir-home"></i>
                         </a>
@@ -77,11 +77,14 @@
                 Homepage
             ------------------------------------->
 
-            <!-- TODO: Make this -->
-            <div class="col p-3 page" id="pageHome">
+            <div class="col p-3 page" id="pageHome" style="display: none;">
                 <h3>Dashboard</h3>
                 <hr>
-                <h5>Welcome to the DVM Provisioning Manager!</h5>
+                <!-- Status Table -->
+                <div class="spinner-border" role="status" id="statusSpinner">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p id="fneConnStatus"></p>
             </div>
 
             <!-----------------------------------
@@ -91,6 +94,9 @@
                 <h3>Radio ID Management</h3>
                 <hr>
                 <!-- RID Table -->
+                <div>
+                    <input class="form-control" type="text" placeholder="Filter..." oninput="filterTable(this)">
+                </div>
                 <div class="table-responsive">
                     <table class="table table-hover" id="ut">
                         <thead>
@@ -195,6 +201,9 @@
                 <h3>Talkgroup Management</h3>
                 <hr>
                 <!-- Talkgroup Table -->
+                <div>
+                    <input class="form-control" type="text" placeholder="Filter..." oninput="filterTable(this)">
+                </div>
                 <div class="table-responsive">
                     <table class="table table-hover" id="tgt">
                         <thead>
@@ -274,6 +283,24 @@
                                     <input type="number" class="form-control" id="addTgFormSlot" max="2" min="1">
                                     <div class="invalid-feedback">Timeslot Invalid</div>
                                 </div>
+                                <!-- Checkboxes for Active/Aff/Parrot -->
+                                <div class="mb-3 row px-2">
+                                    <!-- Active -->
+                                    <div class="col-md-3 px-1">
+                                        <input class="form-check-input" type="checkbox" value="" id="addTgFormActive">
+                                        <label for="addTgFormActive" class="form-check-label">Active</label>
+                                    </div>
+                                    <!-- Affiliated -->
+                                    <div class="col-md-3 px-1">
+                                        <input class="form-check-input" type="checkbox" value="" id="addTgFormAffiliated">
+                                        <label for="addTgFormAffiliated" class="form-check-label">Affiliated</label>
+                                    </div>
+                                    <!-- Parrot -->
+                                    <div class="col-md-3 px-1">
+                                        <input class="form-check-input" type="checkbox" value="" id="addTgFormParrot">
+                                        <label for="addTgFormParrot" class="form-check-label">Parrot</label>
+                                    </div>
+                                </div>
                                 <!-- Template for peer lists below -->
                                 <template id="peerItemTemplate">
                                     <div class="p-1 row row-cols-lg-auto g-0">
@@ -327,21 +354,6 @@
                                             </div>
                                         </div>
                                     </template>
-                                </div>
-                                <!-- Active -->
-                                <div class="mb-3">
-                                    <input class="form-check-input" type="checkbox" value="" id="addTgFormActive">
-                                    <label for="addTgFormActive" class="form-check-label">Active</label>
-                                </div>
-                                <!-- Affiliated -->
-                                <div class="mb-3">
-                                    <input class="form-check-input" type="checkbox" value="" id="addTgFormAffiliated">
-                                    <label for="addTgFormAffiliated" class="form-check-label">Affiliated</label>
-                                </div>
-                                <!-- Parrot -->
-                                <div class="mb-3">
-                                    <input class="form-check-input" type="checkbox" value="" id="addTgFormParrot">
-                                    <label for="addTgFormParrot" class="form-check-label">Parrot</label>
                                 </div>
                             </form>
                         </div>

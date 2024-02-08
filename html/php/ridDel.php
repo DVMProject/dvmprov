@@ -20,14 +20,18 @@ if (!$fneRest->Init($confRestAddress, $confRestPort, $confRestPassword))
 }
 else
 {
-    $result = $fneRest->Put($fneRest->FNE_PUT_RID_DELETE, array('rid' => $rid));
+    $result = json_decode($fneRest->Put($fneRest->FNE_PUT_RID_DELETE, array('rid' => $rid)));
 
-    if ($result['status'] == 200)
+    if ($result->status != 200)
+    {
+        $result->rid = $rid;
+        print(json_encode($result));
+    }
+    else
     {
         $result = $fneRest->Get($fneRest->FNE_GET_RID_COMMIT);
+        print($result);
     }
-
-    print($result);
 }
 
 ?>

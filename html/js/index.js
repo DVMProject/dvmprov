@@ -50,14 +50,28 @@ function enableTooltips() {
     const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 }
 
-/*****************************************************************************
- * 
- * FNE Communication Functions
- * 
- *****************************************************************************/
+function updateStatus() {
+    // Show spinner
+    $("#statusSpinner").show();
+    // Query status/version
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        url: "php/statusGet.php",
+        success: function (data) {
+            $("#fneConnStatus").html(`<code>Connected to ${data.url}:${data.port}<br/>${data.version}</code>`);
+            $("#statusSpinner").hide();
+        }
+    })
+}
 
-function connectFne() {
-    console.log(`Connecting to FNE at address ${config.fneAddress}`);
+function filterTable(element) {
+    // Get currentl filter value
+    const filterVal = $(element).val().toLowerCase();
+    // Find the table rows
+    $(element).parent().parent().find("tbody>tr").filter(function() {
+        $(this).toggle($(this).text().toLowerCase().indexOf(filterVal) > -1);
+    });
 }
 
 /*****************************************************************************
@@ -78,6 +92,27 @@ function page(obj) {
     // Make the current button active and hide the tooltip
     $(obj).addClass("active");
     $(obj).tooltip('hide');
+    // Set the last page to this one
+    config.lastPage = obj.dataset.page;
+    saveConfig();
+}
+
+function loadLastPage(lastPage) {
+    if (!lastPage)
+    {
+        // We show RID page by default
+        $("#pageHome").show();
+        return;
+    }
+    // Remove active from the side navbar items
+    $("#nav-side .nav-link").removeClass("active");
+    // Hide all other pages and show the selected page
+    $(".page").hide().promise().done(function() {
+        if (lastPage) {
+            $(`#${lastPage}`).show();
+        }
+    });
+    $("#nav-side").find(`[data-page="${lastPage}"]`).addClass("active").tooltip("hide");
 }
 
 /*****************************************************************************
@@ -155,6 +190,20 @@ function getCellValue(row, index) {
 const ridTable = $("#ut-body");
 const ridRowTemplate = $("#utr-template");
 
+// Add a return key listener to the add RID modal that opens a new blank form on submit
+$(function() {
+    $("#modalRidAdd .modal-content").keypress(function(e) {
+        if (e.which == 13) {
+            addRidForm(true);
+        }
+    })
+});
+
+// Focus on the RID input when shown
+$('#modalRidAdd').on('shown.bs.modal', () => {
+    $("#addRidFormRID").focus();
+});
+
 // Add table row for RID
 function addRidToTable(rid, enabled, alias) {
     const newRow = $(ridRowTemplate.html());
@@ -179,27 +228,40 @@ function addRidToTable(rid, enabled, alias) {
     enableTooltips();
 }
 
+var ridUpdating = false;
+
 function updateRidTable() {
+    // Check flag so we don't double-dip
+    if (ridUpdating) {return}
+    ridUpdating = true;
     // Clear table
     $("#ut-body tr").remove();
     // Show loading spinner
-    $("#spinnerTable").show();
+    $("#ridSpinnerTable").show();
     // Query
     $.ajax({
         type: "GET",
         dataType: "json",
         url: "php/ridGet.php",
         success: function (data) {
-            console.log("Got new rid data")
-            data.rids.forEach(entry => {
-                addRidToTable(entry.id, entry.enabled, entry.alias);
-            });
-            // Hide the loading spinner
-            $("#ridSpinnerTable").hide();
-            // Sort
-            const table = $("#ut");
-            const header = document.querySelectorAll("#ut th")[0];
-            sortTable(table, header);
+            if (data.status != 200) {
+                console.error("Error updating RID table:")
+                console.error(data);
+            }
+            else {
+                console.log("Got new rid data")
+                data.rids.forEach(entry => {
+                    addRidToTable(entry.id, entry.enabled, entry.alias);
+                });
+                // Hide the loading spinner
+                $("#ridSpinnerTable").hide();
+                // Sort
+                const table = $("#ut");
+                const header = document.querySelectorAll("#ut th")[0];
+                sortTable(table, header);
+            }
+            // Done
+            setTimeout(() => {ridUpdating = false;}, 250);
         }
     })
 }
@@ -235,7 +297,11 @@ function clearRidForm() {
     $("#addRidFormRID").prop("disabled", false);
 }
 
-function ridFormSuccess() {
+/**
+ * Called on success of RID form, shows valid data and closes form
+ * @param {bool} newForm whether to open a new form
+ */
+function ridFormSuccess(newForm) {
     // Clear any invalids
     $("#addRidFormRID").removeClass("is-invalid");
     $("#addRidFormAlias").removeClass("is-invalid");
@@ -246,10 +312,20 @@ function ridFormSuccess() {
         updateRidTable();
         $("#modalRidAdd").modal('hide');
         clearRidForm();
-    }, 1000);
+    }, 300);
+    if (newForm) {
+        setTimeout(() => {
+            console.debug("Displaying new form");
+            $("#modalRidAdd").modal('show');
+        }, 800);
+    }
 }
 
-function addRidForm() {
+/**
+ * Submit the new RID data from the form
+ * @param {bool} newForm Whether to open a new form on success of the current one
+ */
+function addRidForm(newForm) {
     // Get values from form
     const newRID = parseInt($("#addRidFormRID").val());
     const newAlias = $("#addRidFormAlias").val();
@@ -270,7 +346,7 @@ function addRidForm() {
             case 200:
                 // Clear & close the form
                 console.log("Successfully added new RID!");
-                ridFormSuccess();
+                ridFormSuccess(newForm);
                 break;
             default:
                 console.error("Failed to add RID: " + data.status);
@@ -298,10 +374,11 @@ function ridPromptEdit(element) {
 function ridPromptDelete(element) {
     const delRid = $(element).closest("tr").find(".ut-rid").text();
     const delAlias = $(element).closest("tr").find(".ut-alias").text();
+    console.log(`Prompting delete for RID ${delRid} (${delAlias})`);
     // Update the delete modal text
     $("#modalRidDelete").find(".modal-body").html(`Delete RID ${delRid} (${delAlias})?`);
     // Update the delete function onclick
-    $("#modalRidDelete").find(".btn-danger").click(() => {
+    $("#modalRidDelete").find(".btn-danger").off('click').on('click', () => {
         deleteRid(delRid);
     });
 
@@ -311,7 +388,8 @@ function ridPromptDelete(element) {
 
 function cancelRidDelete() {
     $("#modalRidDelete").find(".modal-body").html('');
-    $("#modalRidDelete").find(".btn-danger").prop('onclick', null).off('click');
+    // Remove the onclicks
+    $("#modalRidDelete").find(".btn-danger").off('click');
 }
 
 /**
@@ -319,9 +397,14 @@ function cancelRidDelete() {
  * @param {int} delRid RID to delete
  */
 function deleteRid(delRid) {
+    const rid = parseInt(delRid);
+    if (isNaN(rid)) {
+        console.error("RID to delete is NaN: " + delRid);
+        return;
+    }
     $.post("php/ridDel.php",
     {
-        rid: parseInt(delRid)
+        rid: rid
     },
     function (data, status) {
         if (data.status == 200) {
@@ -329,8 +412,9 @@ function deleteRid(delRid) {
             $("#modalRidDelete").modal('hide');
             updateRidTable();
         } else {
-            console.error("Failed to delete RID: " + data);
-            alert("Failed to delete RID");
+            console.error(`Failed to delete RID ${delRid}:`);
+            console.error(data);
+            alert(`Failed to delete RID ${delRid}`);
         }
     });
 }
@@ -343,6 +427,20 @@ function deleteRid(delRid) {
 
 const tgTable = $("#tgt-body");
 const tgRowTemplate = $("#tgtr-template");
+
+// Add a return key listener to the add RID modal that opens a new blank form on submit
+$(function() {
+    $("#modalTgAdd .modal-content").keypress(function(e) {
+        if (e.which == 13) {
+            addTgForm(true);
+        }
+    })
+});
+
+// Focus on the RID input when shown
+$('#modalTgAdd').on('shown.bs.modal', () => {
+    $("#addTgFormTGID").focus();
+});
 
 // Add table row for TG
 function addTgToTable(tgid, slot, name, active, affiliated) {
@@ -379,27 +477,39 @@ function addTgToTable(tgid, slot, name, active, affiliated) {
     enableTooltips();
 }
 
+var tgUpdating = false;
+
 function updateTgTable() {
+    // Check flag
+    if (tgUpdating) { return; }
+    tgUpdating = true;
     // Clear table
     $("#tgt-body tr").remove();
     // Show loading spinner
-    $("#spinnerTable").show();
+    $("#tgSpinnerTable").show();
     // Query
     $.ajax({
         type: "GET",
         dataType: "json",
         url: "php/tgGet.php",
         success: function (data) {
-            console.log("Got new TG data")
-            data.tgs.forEach(entry => {
-                addTgToTable(entry.source.tgid, entry.source.slot, entry.name, entry.config.active, entry.config.affiliated);
-            });
-            // Hide the loading spinner
-            $("#tgSpinnerTable").hide();
-            // Sort
-            var table = $("#tgt");
-            var header = document.querySelectorAll("#tgt th")[0];
-            sortTable(table, header);
+            if (data.status != 200) {
+                console.error("Error getting new TGs:");
+                console.error(data);
+            } else {
+                console.log("Got new TG data")
+                data.tgs.forEach(entry => {
+                    addTgToTable(entry.source.tgid, entry.source.slot, entry.name, entry.config.active, entry.config.affiliated);
+                });
+                // Hide the loading spinner
+                $("#tgSpinnerTable").hide();
+                // Sort
+                var table = $("#tgt");
+                var header = document.querySelectorAll("#tgt th")[0];
+                sortTable(table, header);
+            }
+            // Done
+            setTimeout(() => {tgUpdating = false;}, 250);
         }
     })
 }
@@ -460,7 +570,7 @@ function clearTgForm() {
     $("#addTgFormSlot").prop("disabled", false);
 }
 
-function tgFormSuccess() {
+function tgFormSuccess(newForm) {
     // Clear any invalids
     $("#addTgFormTGID").removeClass("is-invalid");
     $("#addTgFormName").removeClass("is-invalid");
@@ -486,10 +596,16 @@ function tgFormSuccess() {
         updateTgTable();
         $("#modalTgAdd").modal('hide');
         clearTgForm();
-    }, 1000);
+    }, 300);
+    if (newForm) {
+        setTimeout(() => {
+            console.debug("Displaying new form");
+            $("#modalTgAdd").modal('show');
+        }, 800);
+    }
 }
 
-function addTgForm() {
+function addTgForm(newForm) {
     // Get main values from form
     const tgid = parseInt($("#addTgFormTGID").val());
     const name = $("#addTgFormName").val();
@@ -609,7 +725,7 @@ function addTgForm() {
                 case 200:
                     // Clear & close the form
                     console.log("Successfully added new TGID!");
-                    tgFormSuccess();
+                    tgFormSuccess(newForm);
                     break;
                 default:
                     console.error("Failed to add TGID: " + data.status);
@@ -704,7 +820,7 @@ function tgPromptDelete(element) {
     // Update the delete modal text
     $("#modalTgDelete").find(".modal-body").html(`Delete TGID ${delTgid} (${delName})?`);
     // Update the delete function onclick
-    $("#modalTgDelete").find(".btn-danger").click(() => {
+    $("#modalTgDelete").find(".btn-danger").off('click').on('click', () => {
         deleteTg(delTgid);
     });
 
@@ -714,7 +830,7 @@ function tgPromptDelete(element) {
 
 function cancelTgDelete() {
     $("#modalTgDelete").find(".modal-body").html('');
-    $("#modalTgDelete").find(".btn-danger").prop('onclick', null).off('click');
+    $("#modalTgDelete").find(".btn-danger").off('click');
 }
 
 /**
@@ -757,7 +873,9 @@ window.onload = () => {
     enableTooltips();
     // Load config
     loadConfig();
-    // Load initial data
+    loadLastPage(config.lastPage);
+    // Load tables
+    updateStatus();
     updateRidTable();
     updateTgTable();
 }

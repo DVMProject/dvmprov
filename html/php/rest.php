@@ -13,6 +13,9 @@ class RestApi
 {
     // REST endpoint variables
 
+    public $FNE_GET_VERSION = "/version";
+    public $FNE_GET_STATUS = "/status";
+
     public $FNE_GET_PEER_QUERY = "/peer/query";
 
     public $FNE_GET_RID_QUERY = "/rid/query";
@@ -90,6 +93,8 @@ class RestApi
 
         //print(json_encode(curl_getinfo($this->curl), JSON_PRETTY_PRINT));
         //print($result);
+
+        curl_close($this->curl);
 
         return $result;
     }
