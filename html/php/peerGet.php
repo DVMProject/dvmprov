@@ -14,7 +14,7 @@ if (!$fneRest->Init($confRestAddress, $confRestPort, $confRestPassword))
 }
 else
 {
-    $result = $fneRest->Get($fneRest->FNE_GET_RID_QUERY);
+    $result = $fneRest->Get($fneRest->FNE_GET_PEER_QUERY);
 
     print($result);
 }

@@ -1,6 +1,8 @@
-/*******************************************************
+/*****************************************************************************
+ * 
  * Cookie Functions & Variables
- *******************************************************/
+ * 
+ *****************************************************************************/
 
 var config = {
     lastPage: null
@@ -26,32 +28,43 @@ function clearConfig() {
     console.warn("Removed all local storage settings");
 }
 
-/*******************************************************
+/*****************************************************************************
+ * 
  * Global Variables/Constants
- *******************************************************/
+ * 
+ *****************************************************************************/
 
 const spinnerSmall = document.getElementById("spinner-small");
 
-/*******************************************************
+/*****************************************************************************
+ * 
  * Global Functions
- *******************************************************/
+ * 
+ *****************************************************************************/
 
 function enableTooltips() {
-    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerE1 => new bootstrap.Tooltip(tooltipTriggerE1));
+    $('[data-toggle="tooltip"]').tooltip({
+        trigger: 'hover'
+    });
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 }
 
-/*******************************************************
+/*****************************************************************************
+ * 
  * FNE Communication Functions
- *******************************************************/
+ * 
+ *****************************************************************************/
 
 function connectFne() {
     console.log(`Connecting to FNE at address ${config.fneAddress}`);
 }
 
-/*******************************************************
+/*****************************************************************************
+ * 
  * Sidebar Navigation Buttons
- *******************************************************/
+ * 
+ *****************************************************************************/
 
 function page(obj) {
     // Remove active from the side navbar items
@@ -67,10 +80,12 @@ function page(obj) {
     $(obj).tooltip('hide');
 }
 
-/*******************************************************
+/*****************************************************************************
+ * 
  * Table Sorting Functions
  * https://stackoverflow.com/a/19947532/1842613
- *******************************************************/
+ * 
+ *****************************************************************************/
 
 function clearSort(table) {
     // Remove the sort property
@@ -131,9 +146,11 @@ function getCellValue(row, index) {
     return $(row).children('td').eq(index).html();
 }
 
-/*******************************************************
+/*****************************************************************************
+ * 
  * RID Management Page Functions
- *******************************************************/
+ * 
+ *****************************************************************************/
 
 const ridTable = $("#ut-body");
 const ridRowTemplate = $("#utr-template");
@@ -318,9 +335,11 @@ function deleteRid(delRid) {
     });
 }
 
-/*******************************************************
+/*****************************************************************************
+ * 
  * TG Management Page Functions
- *******************************************************/
+ * 
+ *****************************************************************************/
 
 const tgTable = $("#tgt-body");
 const tgRowTemplate = $("#tgtr-template");
@@ -411,6 +430,274 @@ function clearTgInfo() {
     $("#tgInfoBox").html("");
 }
 
+function clearTgForm() {
+    // Blank the values
+    $("#addTgFormTGID").val("");
+    $("#addTgFormName").val("");
+    $("#addTgFormSlot").val("");
+    $("#addTgFormActive").prop("checked", false);
+    $("#addTgFormAffiliated").prop("checked", false);
+    $("#addTgFormParrot").prop("checked", false);
+    $("#addTgFormExclusions").children("div").remove();
+    $("#addTgFormInclusions").children("div").remove();
+    $("#addTgFormRewrites").children(".rewriteEntry").remove();
+    // Reset invalid classes
+    $("#addTgFormTGID").removeClass("is-invalid");
+    $("#addTgFormName").removeClass("is-invalid");
+    $("#addTgFormSlot").removeClass("is-invalid");
+    $("#addTgFormActive").removeClass("is-invalid");
+    $("#addTgFormAffiliated").removeClass("is-invalid");
+    $("#addTgFormParrot").removeClass("is-invalid");
+    // Reset valid classes
+    $("#addTgFormTGID").removeClass("is-valid");
+    $("#addTgFormName").removeClass("is-valid");
+    $("#addTgFormSlot").removeClass("is-valid");
+    $("#addTgFormActive").removeClass("is-valid");
+    $("#addTgFormAffiliated").removeClass("is-valid");
+    $("#addTgFormParrot").removeClass("is-valid");
+    // Enable the TGID and slot fields if disabled
+    $("#addTgFormTGID").prop("disabled", false);
+    $("#addTgFormSlot").prop("disabled", false);
+}
+
+function tgFormSuccess() {
+    // Clear any invalids
+    $("#addTgFormTGID").removeClass("is-invalid");
+    $("#addTgFormName").removeClass("is-invalid");
+    $("#addTgFormSlot").removeClass("is-invalid");
+    $("#addTgFormActive").removeClass("is-invalid");
+    $("#addTgFormAffiliated").removeClass("is-invalid");
+    $("#addTgFormParrot").removeClass("is-invalid");
+    $("#addTgFormExclusions").find(".tgPeerEntry").removeClass("is-invalid");
+    $("#addTgFormInclusions").find(".tgPeerEntry").removeClass("is-invalid");
+    $("#addTgFormRewrites").find("input").removeClass("is-invalid");
+    // Make everything valid
+    $("#addTgFormTGID").addClass("is-valid");
+    $("#addTgFormName").addClass("is-valid");
+    $("#addTgFormSlot").addClass("is-valid");
+    $("#addTgFormActive").addClass("is-valid");
+    $("#addTgFormAffiliated").addClass("is-valid");
+    $("#addTgFormParrot").addClass("is-valid");
+    $("#addTgFormExclusions").find(".tgPeerEntry").addClass("is-valid");
+    $("#addTgFormInclusions").find(".tgPeerEntry").addClass("is-valid");
+    $("#addTgFormRewrites").find("input").addClass("is-valid");
+    // Send the form and clear after a delay
+    setTimeout(() => {
+        updateTgTable();
+        $("#modalTgAdd").modal('hide');
+        clearTgForm();
+    }, 1000);
+}
+
+function addTgForm() {
+    // Get main values from form
+    const tgid = parseInt($("#addTgFormTGID").val());
+    const name = $("#addTgFormName").val();
+    const slot = parseInt($("#addTgFormSlot").val());
+    const active = $("#addTgFormActive").prop("checked");
+    const affiliated = $("#addTgFormAffiliated").prop("checked");
+    const parrot = $("#addTgFormParrot").prop("checked");
+
+    // Get optional lists
+    const excludeEntries = $("#addTgFormExclusions").find(".tgPeerEntry");
+    const includeEntries = $("#addTgFormInclusions").find(".tgPeerEntry");
+    const rewriteEntries = $("#addTgFormRewrites").find(".rewriteEntry");
+    var excludes = [];
+    var includes = [];
+    var rewrites = [];
+
+    // Validation flag
+    valid = true;
+
+    // Get the include/exclude peer IDs
+    if (excludeEntries.length > 0)
+    {
+        excludeEntries.each((i, element) => {
+            if (!excludes.includes($(element).val())) {
+                excludes.push(parseInt($(element).val()));
+            }
+            else {
+                $(element).addClass("is-invalid");
+                valid = false;
+            }
+        });
+    }
+    if (includeEntries.length > 0)
+    {
+        includeEntries.each((i, element) => {
+            if (!includes.includes($(element).val())) {
+                includes.push(parseInt($(element).val()));
+            }
+            else {
+                $(element).addClass("is-invalid");
+                valid = false;
+            }
+        });
+    }
+
+    // Get the rewrite rules
+    if (rewriteEntries.length > 0)
+    {
+        rewriteEntries.each((i, element) => {
+            // Get rewrite values
+            const peer = parseInt($(element).find(".tgRwPeer").val());
+            const tgid = parseInt($(element).find(".tgRwTgid").val());
+            const slot = parseInt($(element).find(".tgRwSlot").val());
+            // Validate
+            if (isNaN(peer)) {
+                $(element).find(".tgRwPeer").addClass("is-invalid");
+                valid = false;
+            }
+            if (isNaN(tgid)) {
+                $(element).find(".tgRwTgid").addClass("is-invalid");
+                valid = false;
+            }
+            if (isNaN(slot)) {
+                $(element).find(".tgRwSlot").addClass("is-invalid");
+                valid = false;
+            }
+            // Append to the rewrite list
+            rewrites.push({
+                peerid: peer,
+                tgid: tgid,
+                slot: slot
+            });
+        });
+    }
+
+    // Validate TGID
+    if (isNaN(tgid)) {
+        $("#addTgFormTgid").addClass("is-invalid");
+        valid = false;
+    }
+
+    // Validate the timeslot (1 or 2)
+    if (slot > 2 || slot < 1) {
+        $("#addTgFormSlot").addClass("is-invalid");
+        valid = false;
+    }
+
+    // If we had any invalid data, stop
+    if (!valid) {
+        return;
+    }
+
+    postData = {
+        tgid: tgid,
+        name: name,
+        slot: slot,
+        active: active,
+        affiliated: affiliated,
+        parrot: parrot,
+        inclusion: includes,
+        exclusion: excludes,
+        rewrite: rewrites
+    }
+
+    console.log(postData);
+
+    // Send the data and verify success
+    $.ajax({
+        type: "POST",
+        url: "php/tgAdd.php",
+        data: {data: JSON.stringify(postData)},
+        success: function(data, status) {
+            console.log(data);
+            console.log(status);
+            switch (data.status)
+            {
+                case 200:
+                    // Clear & close the form
+                    console.log("Successfully added new TGID!");
+                    tgFormSuccess();
+                    break;
+                default:
+                    console.error("Failed to add TGID: " + data.status);
+                    alert("Failed to add talkgroup: " + data.message);
+                    break;
+            }
+        },
+        error: function(XMLHttpRequest, textStatus, errorThrown) {
+            console.error(XMLHttpRequest);
+            console.error(textStatus);
+            console.error(errorThrown);
+            console.error(XMLHttpRequest.responseText);
+            alert("Failed to add talkgroup: Unknown Error");
+        }
+    });
+    
+}
+
+function addPeerEntry(element, peerId)
+{
+    const peerTemplate = $($("#peerItemTemplate").html());
+    peerTemplate.find(".tgPeerEntry").prop("placeholder", peerId);
+    $(element).after(peerTemplate);
+}
+
+function addRewriteRule()
+{
+    const rwTemplate = $($("#rewriteItemTemplate").html());
+    $("#addTgFormAddRewrite").after(rwTemplate);
+}
+
+function delEntry(element)
+{
+    $(element).closest(".row").remove();
+}
+
+function tgPromptEdit(element) {
+    // Get the parameters from the table
+    const editTgid = parseInt($(element).closest("tr").find(".tgt-tgid").text());
+    const editSlot = parseInt($(element).closest("tr").find(".tgt-slot").text());
+    // Find the talkgroup in the list of TGs
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        url: "php/tgGet.php",
+        success: function (data) {
+            console.log("Got new TG data")
+            data.tgs.forEach(entry => {
+                if (entry.source.tgid == editTgid && entry.source.slot == editSlot) {
+                    console.log("Found match");
+                    console.log(entry);
+                    // Populate the normal fields
+                    $("#addTgFormTGID").val(editTgid);
+                    $("#addTgFormSlot").val(editSlot);
+                    $("#addTgFormName").val(entry.name);
+                    $("#addTgFormActive").prop("checked", entry.config.active);
+                    $("#addTgFormAffiliated").prop("checked", entry.config.affiliated);
+                    $("#addTgFormParrot").prop("checked", entry.config.parrot);
+                    // Add the inclusions & exclusions
+                    entry.config.exclusion.forEach((val) => {
+                        const peerItemTemplate = $($("#peerItemTemplate").html());
+                        peerItemTemplate.find(".tgPeerEntry").val(val);
+                        $("#addTgFormAddExc").after(peerItemTemplate);
+                    });
+                    entry.config.inclusion.forEach((val) => {
+                        const peerItemTemplate = $($("#peerItemTemplate").html());
+                        peerItemTemplate.find(".tgPeerEntry").val(val);
+                        $("#addTgFormAddInc").after(peerItemTemplate);
+                    });
+                    // Add the rewrite rules
+                    entry.config.rewrite.forEach((rw) => {
+                        const rwTemplate = $($("#rewriteItemTemplate").html());
+                        rwTemplate.find(".tgRwPeer").val(rw.peerid);
+                        rwTemplate.find(".tgRwTgid").val(rw.tgid);
+                        rwTemplate.find(".tgRwSlot").val(rw.slot);
+                        $("#addTgFormAddRewrite").after(rwTemplate);
+                    });
+                    // Disable slot & TG edit
+                    $("#addTgFormTGID").prop("disabled", true);
+                    $("#addTgFormSlot").prop("disabled", true);
+                    // Show
+                    $("#modalTgAdd").modal('show');
+                }
+            });
+        }
+    });
+}
+
 function tgPromptDelete(element) {
     const delTgid = $(element).closest("tr").find(".tgt-tgid").text();
     const delName = $(element).closest("tr").find(".tgt-name").text();
@@ -454,14 +741,16 @@ function deleteTg(delTgid) {
 function tgPromptInfo(element) {
     const infoTgid = $(element).closest("tr").find(".tgt-tgid").text();
     const infoSlot = $(element).closest("tr").find(".tgt-slot").text();
-    const tgInfo = getTgInfo(parseInt(infoTgid), parseInt(infoSlot));
+    getTgInfo(parseInt(infoTgid), parseInt(infoSlot));
     // Show info modal
     $("#modalTgInfo").modal('show');
 }
 
-/*******************************************************
+/*****************************************************************************
+ * 
  * Window Onload
- *******************************************************/
+ * 
+ *****************************************************************************/
 
 window.onload = () => {
     // Init Tooltips

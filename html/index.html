@@ -146,7 +146,7 @@
                             <form>
                                 <div class="mb-3">
                                     <label for="addRidFormRID" class="form-label">Radio ID</label>
-                                    <input type="number" class="form-control" id="addRidFormRID">
+                                    <input type="number" class="form-control" id="addRidFormRID" max="16777215" min="0">
                                     <div class="invalid-feedback">Radio ID invalid</div>
                                 </div>
                                 <div class="mb-3">
@@ -192,7 +192,7 @@
             ------------------------------------->
             
             <div class="col p-3 page" id="pageTalkgroups" style="display: none;">
-                <h2>Talkgroup Management</h2>
+                <h3>Talkgroup Management</h3>
                 <hr>
                 <!-- Talkgroup Table -->
                 <div class="table-responsive">
@@ -256,24 +256,89 @@
                         </div>
                         <div class="modal-body">
                             <form>
+                                <!-- TGID -->
                                 <div class="mb-3">
                                     <label for="addTgFormTGID" class="form-label">TGID (Decimal)</label>
-                                    <input type="number" class="form-control" id="addTgFormTGID">
+                                    <input type="number" class="form-control" id="addTgFormTGID" max="16777215" min="0">
                                     <div class="invalid-feedback">TGID Invalid</div>
                                 </div>
+                                <!-- Name -->
                                 <div class="mb-3">
-                                    <label for="addTgFormTGID" class="form-label">Name</label>
+                                    <label for="addTgFormName" class="form-label">Name</label>
                                     <input type="text" class="form-control" id="addTgFormName">
-                                    <div class="invalid-feedback">TGID Invalid</div>
+                                    <div class="invalid-feedback">Name invalid</div>
                                 </div>
+                                <!-- Timeslot -->
+                                <div class="mb-3">
+                                    <label for="addTgFormSlot" class="form-label">Timeslot</label>
+                                    <input type="number" class="form-control" id="addTgFormSlot" max="2" min="1">
+                                    <div class="invalid-feedback">Timeslot Invalid</div>
+                                </div>
+                                <!-- Template for peer lists below -->
+                                <template id="peerItemTemplate">
+                                    <div class="p-1 row row-cols-lg-auto g-0">
+                                        <input type="number" class="form-control tgPeerEntry" style="width: 50%; "max="4294967295" min="1">
+                                        <button type="button" class="btn btn-danger mx-2" onclick="delEntry(this)">
+                                            <i class="iconoir-trash"></i>
+                                        </button>
+                                    </div>
+                                </template>
+                                <!-- Exclusions-->
+                                <div class="mb-3" id="addTgFormExclusions">
+                                    <label>Excluded Peers</label>
+                                    <button type="button" class="btn btn-primary btn-sm m-1" id="addTgFormAddExc" onclick="addPeerEntry(this, 0)">
+                                        <i class="iconoir-plus-circle-solid"></i>
+                                        Add
+                                    </button>
+                                </div>
+                                <!-- Inclusions -->
+                                <div class="mb-3" id="addTgFormInclusions">
+                                    <label>Included Peers</label>
+                                    <button type="button" class="btn btn-primary btn-sm m-1" id="addTgFormAddInc" onclick="addPeerEntry(this, 0)">
+                                        <i class="iconoir-plus-circle-solid"></i>
+                                        Add
+                                    </button>
+                                </div>
+                                <!-- Rewrite Rules -->
+                                <div class="mb-3" id="addTgFormRewrites">
+                                    <label>Rewrite Rules</label>
+                                    <button type="button" class="btn btn-primary btn-sm m-1" id="addTgFormAddRewrite" onclick="addRewriteRule()">
+                                        <i class="iconoir-plus-circle-solid"></i>
+                                        Add
+                                    </button>
+                                    <template id="rewriteItemTemplate">
+                                        <div class="p-1 row g-0 rewriteEntry">
+                                            <div class="col-md-3 px-1">
+                                                <lable for="tgRwPeer" class="form-label"><small>Peer ID</small></lable>
+                                                <input type="number" class="form-control tgRwPeer" max="4294967295" min="1">
+                                            </div>
+                                            <div class="col-md-3 px-1">
+                                                <lable for="tgRwTgid" class="form-label"><small>TGID</small></lable>
+                                                <input type="number" class="form-control tgRwTgid" max="16777215" min="1">
+                                            </div>
+                                            <div class="col-md-3 px-1">
+                                                <lable for="tgRwSlot" class="form-label"><small>Timeslot</small></lable>
+                                            <input type="number" class="form-control tgRwSlot" max="2" min="1">
+                                            </div>
+                                            <div class="col-md-1 text-align-bottom d-flex align-items-end px-1">
+                                                <button type="button" class="btn btn-danger" onclick="delEntry(this)">
+                                                    <i class="iconoir-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                                <!-- Active -->
                                 <div class="mb-3">
                                     <input class="form-check-input" type="checkbox" value="" id="addTgFormActive">
                                     <label for="addTgFormActive" class="form-check-label">Active</label>
                                 </div>
+                                <!-- Affiliated -->
                                 <div class="mb-3">
                                     <input class="form-check-input" type="checkbox" value="" id="addTgFormAffiliated">
                                     <label for="addTgFormAffiliated" class="form-check-label">Affiliated</label>
                                 </div>
+                                <!-- Parrot -->
                                 <div class="mb-3">
                                     <input class="form-check-input" type="checkbox" value="" id="addTgFormParrot">
                                     <label for="addTgFormParrot" class="form-check-label">Parrot</label>
@@ -336,7 +401,7 @@
             ------------------------------------->
 
             <div class="col p-3 page" id="pagePeers" style="display: none;">
-                <h2>Peer Connections</h2>
+                <h3>Peer Connections</h3>
                 <hr>
             </div>
 

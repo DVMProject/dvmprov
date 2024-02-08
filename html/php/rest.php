@@ -89,6 +89,7 @@ class RestApi
         $result = curl_exec($this->curl);
 
         //print(json_encode(curl_getinfo($this->curl), JSON_PRETTY_PRINT));
+        //print($result);
 
         return $result;
     }
