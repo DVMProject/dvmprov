@@ -1,1 +1,10 @@
-html/php/config.php
+rest.py
+
+# Python Venv Stuff
+bin/
+include/
+lib/
+lib64
+share/
+pyvenv.cfg
+__pycache__

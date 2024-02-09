@@ -50,16 +50,15 @@ function enableTooltips() {
     const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 }
 
-function updateStatus() {
-    // Show spinner
-    $("#statusSpinner").show();
-    // Query status/version
+function updateVersion(status) {
     $.ajax({
         type: "GET",
         dataType: "json",
-        url: "php/statusGet.php",
+        url: "rest/version",
+        contentType: "application/json",
         success: function (data) {
-            $("#fneConnStatus").html(`<code>Connected to ${data.url}:${data.port}<br/>${data.version}</code>`);
+            console.log(`Got new FNE version: ${data.version}`)
+            $("#fneConnStatus").html(`<code>Connected to ${data.version}</code>`);
             $("#statusSpinner").hide();
         }
     })
@@ -241,8 +240,8 @@ function updateRidTable() {
     // Query
     $.ajax({
         type: "GET",
-        dataType: "json",
-        url: "php/ridGet.php",
+        url: "rest/rid/query",
+        contentType: "application/json",
         success: function (data) {
             if (data.status != 200) {
                 console.error("Error updating RID table:")
@@ -338,19 +337,22 @@ function addRidForm(newForm) {
     }
 
     // Send the data and verify success
-    $.post("php/ridAdd.php",
-    postData,
-    function(data, status) {
-        switch (data.status)
-        {
-            case 200:
-                // Clear & close the form
-                console.log("Successfully added new RID!");
-                ridFormSuccess(newForm);
-                break;
-            default:
-                console.error("Failed to add RID: " + data.status);
-                break;
+    $.ajax({
+        type: "PUT",
+        url: "rest/rid/add",
+        contentType: "application/json",
+        data: JSON.stringify(postData),
+        success: function (data) {
+            console.log(`Successfully added RID ${newRID}`);
+            ridCommit();
+            ridFormSuccess(newForm);
+        },
+        error: function(xhr, textStatus, thrownError) {
+            console.error(`Failed to add RID ${newRID}:`);
+            console.error(xhr);
+            console.error(textStatus);
+            console.error(thrownError);
+            alert(`Failed to add TG ${newRID}`);
         }
     });
     
@@ -402,19 +404,36 @@ function deleteRid(delRid) {
         console.error("RID to delete is NaN: " + delRid);
         return;
     }
-    $.post("php/ridDel.php",
-    {
-        rid: rid
-    },
-    function (data, status) {
-        if (data.status == 200) {
+    $.ajax({
+        type: "PUT",
+        url: "rest/rid/delete",
+        contentType: "application/json",
+        data: JSON.stringify({rid: rid}),
+        success: function (data) {
             console.log(`Successfully deleted RID ${delRid}`);
             $("#modalRidDelete").modal('hide');
-            updateRidTable();
-        } else {
+            ridCommit();
+        },
+        error: function(xhr, textStatus, thrownError) {
             console.error(`Failed to delete RID ${delRid}:`);
-            console.error(data);
+            console.error(thrownError);
             alert(`Failed to delete RID ${delRid}`);
+        }
+    });
+}
+
+function ridCommit() {
+    $.ajax({
+        type: "GET",
+        url: "rest/rid/commit",
+        success: function (data) {
+            console.log("Commited RIDs succesfully");
+            updateRidTable();
+        },
+        error: function (xhr, textStatus, thrownError) {
+            console.error("Failed to commit RIDs");
+            console.error(thrownError);
+            alert("Failed to commit RIDs");
         }
     });
 }
@@ -491,7 +510,7 @@ function updateTgTable() {
     $.ajax({
         type: "GET",
         dataType: "json",
-        url: "php/tgGet.php",
+        url: "rest/tg/query",
         success: function (data) {
             if (data.status != 200) {
                 console.error("Error getting new TGs:");
@@ -521,7 +540,7 @@ function getTgInfo(tgid, slot) {
     $.ajax({
         type: "GET",
         dataType: "json",
-        url: "php/tgGet.php",
+        url: "rest/tg/query",
         success: function (data) {
             data.tgs.forEach(entry => {
                 // Find the TGID we're looking for
@@ -699,49 +718,39 @@ function addTgForm(newForm) {
     }
 
     postData = {
-        tgid: tgid,
         name: name,
-        slot: slot,
-        active: active,
-        affiliated: affiliated,
-        parrot: parrot,
-        inclusion: includes,
-        exclusion: excludes,
-        rewrite: rewrites
+        config: {
+            active: active,
+            affiliated: affiliated,
+            parrot: parrot,
+            inclusion: includes,
+            exclusion: excludes,
+            rewrite: rewrites
+        },
+        source: {
+            tgid: tgid,
+            slot: slot
+        }
     }
 
-    console.log(postData);
-
-    // Send the data and verify success
     $.ajax({
-        type: "POST",
-        url: "php/tgAdd.php",
-        data: {data: JSON.stringify(postData)},
-        success: function(data, status) {
-            console.log(data);
-            console.log(status);
-            switch (data.status)
-            {
-                case 200:
-                    // Clear & close the form
-                    console.log("Successfully added new TGID!");
-                    tgFormSuccess(newForm);
-                    break;
-                default:
-                    console.error("Failed to add TGID: " + data.status);
-                    alert("Failed to add talkgroup: " + data.message);
-                    break;
-            }
+        type: "PUT",
+        url: "rest/tg/add",
+        contentType: "application/json",
+        data: JSON.stringify(postData),
+        success: function (data) {
+            console.log(`Successfully added TG ${tgid}`);
+            tgCommit();
+            tgFormSuccess(newForm);
         },
-        error: function(XMLHttpRequest, textStatus, errorThrown) {
-            console.error(XMLHttpRequest);
+        error: function(xhr, textStatus, thrownError) {
+            console.error(`Failed to add TG ${tgid}:`);
+            console.error(xhr);
             console.error(textStatus);
-            console.error(errorThrown);
-            console.error(XMLHttpRequest.responseText);
-            alert("Failed to add talkgroup: Unknown Error");
+            console.error(thrownError);
+            alert(`Failed to add TG ${tgid}`);
         }
     });
-    
 }
 
 function addPeerEntry(element, peerId)
@@ -770,7 +779,7 @@ function tgPromptEdit(element) {
     $.ajax({
         type: "GET",
         dataType: "json",
-        url: "php/tgGet.php",
+        url: "rest/tg/query",
         success: function (data) {
             console.log("Got new TG data")
             data.tgs.forEach(entry => {
@@ -817,11 +826,12 @@ function tgPromptEdit(element) {
 function tgPromptDelete(element) {
     const delTgid = $(element).closest("tr").find(".tgt-tgid").text();
     const delName = $(element).closest("tr").find(".tgt-name").text();
+    const delSlot = $(element).closest("tr").find(".tgt-slot").text();
     // Update the delete modal text
     $("#modalTgDelete").find(".modal-body").html(`Delete TGID ${delTgid} (${delName})?`);
     // Update the delete function onclick
     $("#modalTgDelete").find(".btn-danger").off('click').on('click', () => {
-        deleteTg(delTgid);
+        deleteTg(delTgid, delSlot);
     });
 
     // Show the modal
@@ -837,19 +847,50 @@ function cancelTgDelete() {
  * Delete the specified RID from the table
  * @param {int} delTgid RID to delete
  */
-function deleteTg(delTgid) {
-    $.post("php/tgDel.php",
-    {
-        tgid: parseInt(delTgid)
-    },
-    function (data, status) {
-        if (data.status == 200) {
-            console.log(`Successfully deleted TGID ${delTgid}`);
+function deleteTg(delTgid, delSlot) {
+    const tgid = parseInt(delTgid);
+    const slot = parseInt(delSlot);
+    if (isNaN(tgid)) {
+        console.error("TG to delete is NaN: " + delTgid);
+        return;
+    }
+    if (isNaN(slot)) {
+        console.error("Slot to delete is NaN: " + delSlot);
+        return;
+    }
+    $.ajax({
+        type: "PUT",
+        url: "rest/tg/delete",
+        contentType: "application/json",
+        data: JSON.stringify({
+            tgid: tgid,
+            slot: slot
+        }),
+        success: function (data) {
+            console.log(`Successfully deleted TG ${delTgid}`);
             $("#modalTgDelete").modal('hide');
-            updateTgTable();
-        } else {
-            console.error("Failed to delete TGID: " + data);
-            alert("Failed to delete TGID");
+            tgCommit();
+        },
+        error: function(xhr, textStatus, thrownError) {
+            console.error(`Failed to delete TG ${delTgid}:`);
+            console.error(thrownError);
+            alert(`Failed to delete TG ${delTgid}`);
+        }
+    });
+}
+
+function tgCommit() {
+    $.ajax({
+        type: "GET",
+        url: "rest/tg/commit",
+        success: function (data) {
+            console.log("Commited TGs succesfully");
+            updateRidTable();
+        },
+        error: function (xhr, textStatus, thrownError) {
+            console.error("Failed to commit TGs");
+            console.error(thrownError);
+            alert("Failed to commit TGs");
         }
     });
 }
@@ -875,7 +916,7 @@ window.onload = () => {
     loadConfig();
     loadLastPage(config.lastPage);
     // Load tables
-    updateStatus();
+    updateVersion();
     updateRidTable();
     updateTgTable();
 }
