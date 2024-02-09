@@ -30,3 +30,13 @@ Simply run the python script from within the virtual environment. You should see
 INFO:root:Succesfully authenticated with FNE REST API
 INFO:waitress:Serving on http://127.0.0.1:8180
 ```
+### Command Line Arguments
+| Argument | Description |
+| ----------- | ----------- |
+| -v | enable debug logging |
+| -r | enable reverse proxy support (required if accessing `dvmprov` via a reverse proxy) |
+
+### Reverse Proxy Configuration
+As `dvmprov` uses Flask as its web backend, use the following guides to configure your web server:
+- [NGINX Configuration](https://flask.palletsprojects.com/en/3.0.x/deploying/nginx/)
+- [Apache HTTPD Configuration](https://flask.palletsprojects.com/en/3.0.x/deploying/apache-httpd/)
