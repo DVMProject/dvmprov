@@ -36,6 +36,15 @@ def rest_auth():
         url = "http://%s:%u/auth" % (rest_api_address, rest_api_port),
         json = {'auth': hashPass},
     )
+    # Debug
+    logging.debug("--- REQ ---")
+    logging.debug(result.request.url)
+    logging.debug(result.request.headers)
+    logging.debug(result.request.body)
+    logging.debug("--- RESP ---")
+    logging.debug(result.url)
+    logging.debug(result.headers)
+    logging.debug(result.content)
     # Try to convert the response to JSON
     try:
         response = json.loads(result.content)
