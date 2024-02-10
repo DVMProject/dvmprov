@@ -36,16 +36,23 @@ def rest_auth():
         url = "http://%s:%u/auth" % (rest_api_address, rest_api_port),
         json = {'auth': hashPass},
     )
-    # Check that we got a token back
-    if (result.status_code != 200):
-        logging.error("Failed to authenticate with FNE REST API!")
+    # Try to convert the response to JSON
+    try:
+        response = json.loads(result.content)
+        if "status" in response:
+            if response["status"] != 200:
+                logging.error("Got error from FNE REST API during auth exchange: %s" % response["message"])
+                exit(1)
+            if "token" in response:
+                auth_token = response["token"]
+                rest_host = "%s:%u" % (rest_api_address, rest_api_port)
+                logging.info("Successfully authenticated with FNE REST API")
+        else:
+            logging.error("Invalid response received from FNE REST API during auth exchange: %s" % result.content)
+            exit(1)
+    except Exception as ex:
+        logging.error("Caught exception during FNE REST API authentication: %s" % ex)
         exit(1)
-    # Save the token
-    logging.debug("Got auth response: %s" % result.content)
-    auth_token = json.loads(result.content)['token']
-    if auth_token:
-        logging.info("Succesfully authenticated with FNE REST API")
-        rest_host = "%s:%u" % (rest_api_address, rest_api_port)
 
 if args.debug:
     logging.getLogger().setLevel(logging.DEBUG)
