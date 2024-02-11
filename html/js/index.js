@@ -68,7 +68,7 @@ function filterTable(element) {
     // Get currentl filter value
     const filterVal = $(element).val().toLowerCase();
     // Find the table rows
-    $(element).parent().parent().find("tbody>tr").filter(function() {
+    $(element).parent().parent().parent().find("tbody>tr").filter(function() {
         $(this).toggle($(this).text().toLowerCase().indexOf(filterVal) > -1);
     });
 }
