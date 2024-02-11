@@ -23,6 +23,8 @@ i.unsorted {
     color: gray;
 }
 
-.page {
-    height: 100%;
+.mainpage-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
 }

@@ -83,9 +83,9 @@ function page(obj) {
     // Remove active from the side navbar items
     $("#nav-side .nav-link").removeClass("active");
     // Hide all other pages and show the selected page
-    $(".page").fadeOut(150).promise().done(function() {
+    $(".page").addClass("d-none").promise().done(function() {
         if (obj.dataset.page) {
-            $(`#${obj.dataset.page}`).fadeIn(150);
+            $(`#${obj.dataset.page}`).removeClass("d-none");
         }
     });
     // Make the current button active and hide the tooltip
@@ -106,9 +106,9 @@ function loadLastPage(lastPage) {
     // Remove active from the side navbar items
     $("#nav-side .nav-link").removeClass("active");
     // Hide all other pages and show the selected page
-    $(".page").hide().promise().done(function() {
+    $(".page").addClass("d-none").promise().done(function() {
         if (lastPage) {
-            $(`#${lastPage}`).show();
+            $(`#${lastPage}`).removeClass("d-none");
         }
     });
     $("#nav-side").find(`[data-page="${lastPage}"]`).addClass("active").tooltip("hide");

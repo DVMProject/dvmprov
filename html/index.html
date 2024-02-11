@@ -35,388 +35,425 @@
     </nav>
 
     <!-- Main Page Content -->
-    <div class="container-fluid" style="padding-top: 59px; height: 100%">
-        <div class="row" style="height: 100%;">
+    <div class="container-fluid px-0 d-flex" style="padding-top: 59px; height: 100%">
+        <!-- Sidebar -->
+        <div class="d-flex flex-column flex-shrink-0 bg-body-tertiary" style="width: 3.5rem; padding:0;"
+            id="nav-side">
+            <ul class="nav nav-pills nav-flush flex-column mb-auto text-center">
+                <!-- Home -->
+                <li class="nav-item">
+                    <a class="nav-link border-bottom rounded-0 sidebar-button" href="#" data-bs-toggle="tooltip"
+                        data-bs-placement="right" title="Home" onclick="page(this)" data-page="pageHome">
+                        <i class="iconoir-home"></i>
+                    </a>
+                </li>
+                <!-- RIDs -->
+                <li class="nav-item">
+                    <a class="nav-link border-bottom rounded-0 sidebar-button" href="#" data-bs-toggle="tooltip"
+                        data-bs-placement="right" title="Radio IDs" onclick="page(this)" data-page="pageRIDs">
+                        <i class="iconoir-community"></i>
+                    </a>
+                </li>
+                <!-- Routing Rules -->
+                <li class="nav-item">
+                    <a class="nav-link border-bottom rounded-0 sidebar-button" href="#" data-bs-toggle="tooltip"
+                        data-bs-placement="right" title="Talkgroups" onclick="page(this)" data-page="pageTalkgroups">
+                        <i class="iconoir-network-right"></i>
+                    </a>
+                </li>
+                <!-- Peers -->
+                <li class="nav-item">
+                    <a class="nav-link border-bottom rounded-0 sidebar-button" href="#" data-bs-toggle="tooltip"
+                        data-bs-placement="right" title="Peers" onclick="page(this)" data-page="pagePeers">
+                        <i class="iconoir-server-connection"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
 
-            <!-- Sidebar -->
-            <div class="d-flex flex-column flex-shrink-0 bg-body-tertiary" style="width: 3.5rem; padding:0;"
-                id="nav-side">
-                <ul class="nav nav-pills nav-flush flex-column mb-auto text-center">
-                    <!-- Home -->
-                    <li class="nav-item">
-                        <a class="nav-link border-bottom rounded-0 sidebar-button" href="#" data-bs-toggle="tooltip"
-                            data-bs-placement="right" title="Home" onclick="page(this)" data-page="pageHome">
-                            <i class="iconoir-home"></i>
-                        </a>
-                    </li>
-                    <!-- RIDs -->
-                    <li class="nav-item">
-                        <a class="nav-link border-bottom rounded-0 sidebar-button" href="#" data-bs-toggle="tooltip"
-                            data-bs-placement="right" title="Radio IDs" onclick="page(this)" data-page="pageRIDs">
-                            <i class="iconoir-community"></i>
-                        </a>
-                    </li>
-                    <!-- Routing Rules -->
-                    <li class="nav-item">
-                        <a class="nav-link border-bottom rounded-0 sidebar-button" href="#" data-bs-toggle="tooltip"
-                            data-bs-placement="right" title="Talkgroups" onclick="page(this)" data-page="pageTalkgroups">
-                            <i class="iconoir-network-right"></i>
-                        </a>
-                    </li>
-                    <!-- Peers -->
-                    <li class="nav-item">
-                        <a class="nav-link border-bottom rounded-0 sidebar-button" href="#" data-bs-toggle="tooltip"
-                            data-bs-placement="right" title="Peers" onclick="page(this)" data-page="pagePeers">
-                            <i class="iconoir-server-connection"></i>
-                        </a>
-                    </li>
-                </ul>
-            </div>
+        <div class="d-flex flex-column flex-grow-1 p-3 h-100">
+            <div class="container-fluid d-flex h-100 p-0">
 
-            <!-----------------------------------
-                Homepage
-            ------------------------------------->
+                <!-----------------------------------
+                    Homepage
+                ------------------------------------->
 
-            <div class="col p-3 page overflow-auto" id="pageHome" style="display: none;">
-                <h3>Dashboard</h3>
-                <hr>
-                <!-- Status Table -->
-                <div class="spinner-border" role="status" id="statusSpinner">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <p id="fneConnStatus"></p>
-            </div>
-
-            <!-----------------------------------
-                RID Management Page & Modals
-            ------------------------------------->
-            <div class="col p-3 page overflow-auto" id="pageRIDs" style="display: none;">
-                <h3>Radio ID Management</h3>
-                <hr>
-                <!-- RID Table -->
-                <div>
-                    <input class="form-control" type="text" placeholder="Filter..." oninput="filterTable(this)">
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover" id="ut">
-                        <thead>
-                            <tr>
-                                <th scope="col" onclick="clickSort(this)" data-sort="asc" class="table-header" style="width: 10%;"><span>RID</span><i class="iconoir-sort unsorted"></i></th>
-                                <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 10%;"><span>Enabled</span><i class="iconoir-sort unsorted"></i></th>
-                                <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 65%;"><span>Alias</span><i class="iconoir-sort unsorted"></i></th>
-                                <th scope="col" class="table-header" style="width: 15%;"><span>Actions</span></th>
-                            </tr>
-                        </thead>
-                        <tbody id="ut-body">
-                            <template id="utr-template">
-                                <tr>
-                                    <td class="ut-rid"></td>
-                                    <td class="ut-enabled fs-4"></td>
-                                    <td class="ut-alias"></td>
-                                    <td>
-                                        <div class="btn-group" role="group" aria-label="RID actions">
-                                            <button type="button" class="btn btn-danger" data-bs-toggle="tooltip"
-                                                data-bs-placement="top" title="Delete" onclick="ridPromptDelete(this)">
-                                                <i class="iconoir-trash"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-primary" data-bs-toggle="tooltip"
-                                                data-bs-placement="top" title="Edit" onclick="ridPromptEdit(this)">
-                                                <i class="iconoir-edit"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </template>
-                            <div class="spinner-border" role="status" id="ridSpinnerTable">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </tbody>
-                    </table>
-                </div>
-                <!-- Add RID Button -->
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalRidAdd">
-                    <i class="iconoir-plus-circle-solid"></i>
-                    Add
-                </button>
-            </div>
-
-            <!-- Add/Edit RID Modal -->
-            <div class="modal fade" id="modalRidAdd">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Edit RID</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="d-flex flex-column flex-grow-1 d-none page" id="pageHome">
+                    <div class="row">
+                        <h3>Dashboard</h3>
+                        <hr>
+                    </div>
+                    <div class="row">
+                        <!-- Status Table -->
+                        <div class="spinner-border" role="status" id="statusSpinner">
+                            <span class="visually-hidden">Loading...</span>
                         </div>
-                        <div class="modal-body">
-                            <form>
-                                <div class="mb-3">
-                                    <label for="addRidFormRID" class="form-label">Radio ID</label>
-                                    <input type="number" class="form-control" id="addRidFormRID" max="16777215" min="0">
-                                    <div class="invalid-feedback">Radio ID invalid</div>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="addRidFormCall" class="form-label">Alias</label>
-                                    <input type="text" class="form-control" id="addRidFormAlias">
-                                    <div class="invalid-feedback">Callsign invalid</div>
-                                </div>
-                                <div class="mb-3">
-                                    <input class="form-check-input" type="checkbox" value="" id="addRidFormEnabled">
-                                    <label for="addRidFormEnabled" class="form-check-label">Enabled</label>
-                                </div>
-                            </form>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
-                                onclick="clearRidForm()">Cancel</button>
-                            <button type="button" class="btn btn-primary" onclick="addRidForm()">Save</button>
-                        </div>
+                        <p id="fneConnStatus"></p>
                     </div>
                 </div>
-            </div>
 
-            <!-- Delete RID Confirm Modal -->
-            <div class="modal fade" id="modalRidDelete">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Delete RID</h5>
+                <!-----------------------------------
+                    RID Management Page & Modals
+                ------------------------------------->
+                <div class="d-flex flex-column flex-grow-1 d-none page" id="pageRIDs">
+                    <div class="row">
+                        <h3>Radio ID Management</h3>
+                        <hr>
+                    </div>
+                    <!-- Header Search Bar and Buttons-->
+                    <div class="row my-2 flex-grow-1">
+                        <!-- Search Bar -->
+                        <div class="col-md-9">
+                            <input class="form-control" type="text" placeholder="Filter..." oninput="filterTable(this)">
                         </div>
-                        <div class="modal-body">
+                        <!-- Add Button -->
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-primary mr-2" data-bs-toggle="modal" data-bs-target="#modalRidAdd">
+                                <i class="iconoir-plus-circle-solid"></i>
+                                Add
+                            </button>
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
-                                onclick="cancelRidDelete()">Cancel</button>
-                            <button type="button" class="btn btn-danger">Delete</button>
+                        <!-- Refresh Button -->
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-secondary" onclick="updateRidTable()">
+                                <i class="iconoir-refresh-circle-solid"></i>
+                                Refresh
+                            </button>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-----------------------------------
-                Talkgroup Management Page & Modals
-            ------------------------------------->
-            
-            <div class="col p-3 page overflow-auto" id="pageTalkgroups" style="display: none;">
-                <h3>Talkgroup Management</h3>
-                <hr>
-                <!-- Talkgroup Table -->
-                <div>
-                    <input class="form-control" type="text" placeholder="Filter..." oninput="filterTable(this)">
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover" id="tgt">
-                        <thead>
-                            <tr>
-                                <th scope="col" onclick="clickSort(this)" data-sort="asc" class="table-header" style="width: 10%;"><span>TGID</span><i class="iconoir-sort unsorted"></i></th>
-                                <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 8%;"><span>Slot</span><i class="iconoir-sort unsorted"></i></th>
-                                <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 10%;"><span>Active</span><i class="iconoir-sort unsorted"></i></th>
-                                <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 12%;"><span>Affiliated</span><i class="iconoir-sort unsorted"></i></th>
-                                <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 45%;"><span>Name</span><i class="iconoir-sort unsorted"></i></th>
-                                <th scope="col" class="table-header" style="width: 15%;"><span>Actions</span></th>
-                            </tr>
-                        </thead>
-                        <tbody id="tgt-body">
-                            <template id="tgtr-template">
+                    <!-- RID Table -->
+                    <div class="table-responsive mainpage-table">
+                        <table class="table table-hover" id="ut">
+                            <thead>
                                 <tr>
-                                    <td class="tgt-tgid"></td>
-                                    <td class="tgt-slot"></td>
-                                    <td class="tgt-active fs-4"></td>
-                                    <td class="tgt-affiliated fs-4"></td>
-                                    <td class="tgt-name"></td>
-                                    <td>
-                                        <div class="btn-group" role="group" aria-label="TG actions">
-                                            <button type="button" class="btn btn-danger" data-bs-toggle="tooltip"
-                                                data-bs-placement="top" title="Delete" onclick="tgPromptDelete(this)">
-                                                <i class="iconoir-trash"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-info" data-bs-toggle="tooltip"
-                                                data-bs-placement="top" title="Info" onclick="tgPromptInfo(this)">
-                                                <i class="iconoir-info-circle"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-primary" data-bs-toggle="tooltip"
-                                                data-bs-placement="top" title="Edit" onclick="tgPromptEdit(this)">
-                                                <i class="iconoir-edit"></i>
-                                            </button>
-                                        </div>
-                                    </td>
+                                    <th scope="col" onclick="clickSort(this)" data-sort="asc" class="table-header" style="width: 10%;"><span>RID</span><i class="iconoir-sort unsorted"></i></th>
+                                    <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 10%;"><span>Enabled</span><i class="iconoir-sort unsorted"></i></th>
+                                    <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 65%;"><span>Alias</span><i class="iconoir-sort unsorted"></i></th>
+                                    <th scope="col" class="table-header" style="width: 15%;"><span>Actions</span></th>
                                 </tr>
-                            </template>
-                            <div class="spinner-border" role="status" id="tgSpinnerTable">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </tbody>
-                    </table>
-                </div>
-                <!-- Add TG Button -->
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalTgAdd">
-                    <i class="iconoir-plus-circle-solid"></i>
-                    Add
-                </button>
-            </div>
-
-            <!-- Add/Edit TG Modal -->
-            <div class="modal fade" id="modalTgAdd">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Edit Talkgroup</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form>
-                                <!-- TGID -->
-                                <div class="mb-3">
-                                    <label for="addTgFormTGID" class="form-label">TGID (Decimal)</label>
-                                    <input type="number" class="form-control" id="addTgFormTGID" max="16777215" min="0">
-                                    <div class="invalid-feedback">TGID Invalid</div>
-                                </div>
-                                <!-- Name -->
-                                <div class="mb-3">
-                                    <label for="addTgFormName" class="form-label">Name</label>
-                                    <input type="text" class="form-control" id="addTgFormName">
-                                    <div class="invalid-feedback">Name invalid</div>
-                                </div>
-                                <!-- Timeslot -->
-                                <div class="mb-3">
-                                    <label for="addTgFormSlot" class="form-label">Timeslot</label>
-                                    <input type="number" class="form-control" id="addTgFormSlot" max="2" min="1">
-                                    <div class="invalid-feedback">Timeslot Invalid</div>
-                                </div>
-                                <!-- Checkboxes for Active/Aff/Parrot -->
-                                <div class="mb-3 row px-2">
-                                    <!-- Active -->
-                                    <div class="col-md-3 px-1">
-                                        <input class="form-check-input" type="checkbox" value="" id="addTgFormActive">
-                                        <label for="addTgFormActive" class="form-check-label">Active</label>
-                                    </div>
-                                    <!-- Affiliated -->
-                                    <div class="col-md-3 px-1">
-                                        <input class="form-check-input" type="checkbox" value="" id="addTgFormAffiliated">
-                                        <label for="addTgFormAffiliated" class="form-check-label">Affiliated</label>
-                                    </div>
-                                    <!-- Parrot -->
-                                    <div class="col-md-3 px-1">
-                                        <input class="form-check-input" type="checkbox" value="" id="addTgFormParrot">
-                                        <label for="addTgFormParrot" class="form-check-label">Parrot</label>
-                                    </div>
-                                </div>
-                                <!-- Template for peer lists below -->
-                                <template id="peerItemTemplate">
-                                    <div class="p-1 row row-cols-lg-auto g-0">
-                                        <input type="number" class="form-control tgPeerEntry" style="width: 50%; "max="4294967295" min="1">
-                                        <button type="button" class="btn btn-danger mx-2" onclick="delEntry(this)">
-                                            <i class="iconoir-trash"></i>
-                                        </button>
-                                    </div>
-                                </template>
-                                <!-- Exclusions-->
-                                <div class="mb-3" id="addTgFormExclusions">
-                                    <label>Excluded Peers</label>
-                                    <button type="button" class="btn btn-primary btn-sm m-1" id="addTgFormAddExc" onclick="addPeerEntry(this, 0)">
-                                        <i class="iconoir-plus-circle-solid"></i>
-                                        Add
-                                    </button>
-                                </div>
-                                <!-- Inclusions -->
-                                <div class="mb-3" id="addTgFormInclusions">
-                                    <label>Included Peers</label>
-                                    <button type="button" class="btn btn-primary btn-sm m-1" id="addTgFormAddInc" onclick="addPeerEntry(this, 0)">
-                                        <i class="iconoir-plus-circle-solid"></i>
-                                        Add
-                                    </button>
-                                </div>
-                                <!-- Rewrite Rules -->
-                                <div class="mb-3" id="addTgFormRewrites">
-                                    <label>Rewrite Rules</label>
-                                    <button type="button" class="btn btn-primary btn-sm m-1" id="addTgFormAddRewrite" onclick="addRewriteRule()">
-                                        <i class="iconoir-plus-circle-solid"></i>
-                                        Add
-                                    </button>
-                                    <template id="rewriteItemTemplate">
-                                        <div class="p-1 row g-0 rewriteEntry">
-                                            <div class="col-md-3 px-1">
-                                                <lable for="tgRwPeer" class="form-label"><small>Peer ID</small></lable>
-                                                <input type="number" class="form-control tgRwPeer" max="4294967295" min="1">
-                                            </div>
-                                            <div class="col-md-3 px-1">
-                                                <lable for="tgRwTgid" class="form-label"><small>TGID</small></lable>
-                                                <input type="number" class="form-control tgRwTgid" max="16777215" min="1">
-                                            </div>
-                                            <div class="col-md-3 px-1">
-                                                <lable for="tgRwSlot" class="form-label"><small>Timeslot</small></lable>
-                                            <input type="number" class="form-control tgRwSlot" max="2" min="1">
-                                            </div>
-                                            <div class="col-md-1 text-align-bottom d-flex align-items-end px-1">
-                                                <button type="button" class="btn btn-danger" onclick="delEntry(this)">
+                            </thead>
+                            <tbody id="ut-body">
+                                <template id="utr-template">
+                                    <tr>
+                                        <td class="ut-rid"></td>
+                                        <td class="ut-enabled fs-4"></td>
+                                        <td class="ut-alias"></td>
+                                        <td>
+                                            <div class="btn-group" role="group" aria-label="RID actions">
+                                                <button type="button" class="btn btn-danger" data-bs-toggle="tooltip"
+                                                    data-bs-placement="top" title="Delete" onclick="ridPromptDelete(this)">
                                                     <i class="iconoir-trash"></i>
                                                 </button>
+                                                <button type="button" class="btn btn-primary" data-bs-toggle="tooltip"
+                                                    data-bs-placement="top" title="Edit" onclick="ridPromptEdit(this)">
+                                                    <i class="iconoir-edit"></i>
+                                                </button>
                                             </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <div class="spinner-border" role="status" id="ridSpinnerTable">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Add/Edit RID Modal -->
+                <div class="modal fade" id="modalRidAdd">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Edit RID</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form>
+                                    <div class="mb-3">
+                                        <label for="addRidFormRID" class="form-label">Radio ID</label>
+                                        <input type="number" class="form-control" id="addRidFormRID" max="16777215" min="0">
+                                        <div class="invalid-feedback">Radio ID invalid</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="addRidFormCall" class="form-label">Alias</label>
+                                        <input type="text" class="form-control" id="addRidFormAlias">
+                                        <div class="invalid-feedback">Callsign invalid</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <input class="form-check-input" type="checkbox" value="" id="addRidFormEnabled">
+                                        <label for="addRidFormEnabled" class="form-check-label">Enabled</label>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                                    onclick="clearRidForm()">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="addRidForm()">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delete RID Confirm Modal -->
+                <div class="modal fade" id="modalRidDelete">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Delete RID</h5>
+                            </div>
+                            <div class="modal-body">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                                    onclick="cancelRidDelete()">Cancel</button>
+                                <button type="button" class="btn btn-danger">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-----------------------------------
+                    Talkgroup Management Page & Modals
+                ------------------------------------->
+                
+                <div class="d-flex flex-column flex-grow-1 d-none page" id="pageTalkgroups">
+                    <div class="row">
+                        <h3>Talkgroup Management</h3>
+                        <hr>
+                    </div>
+                    <!-- Header Search Bar and Buttons-->
+                    <div class="row my-2">
+                        <!-- Search Bar -->
+                        <div class="col-md-9">
+                            <input class="form-control" type="text" placeholder="Filter..." oninput="filterTable(this)">
+                        </div>
+                        <!-- Add Button -->
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalTgAdd">
+                                <i class="iconoir-plus-circle-solid"></i>
+                                Add
+                            </button>
+                        </div>
+                        <!-- Refresh Button -->
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-secondary" onclick="updateTgTable()">
+                                <i class="iconoir-refresh-circle-solid"></i>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Talkgroup Table -->
+                    <div class="table-responsive mainpage-table">
+                        <table class="table table-hover" id="tgt">
+                            <thead>
+                                <tr>
+                                    <th scope="col" onclick="clickSort(this)" data-sort="asc" class="table-header" style="width: 10%;"><span>TGID</span><i class="iconoir-sort unsorted"></i></th>
+                                    <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 8%;"><span>Slot</span><i class="iconoir-sort unsorted"></i></th>
+                                    <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 10%;"><span>Active</span><i class="iconoir-sort unsorted"></i></th>
+                                    <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 12%;"><span>Affiliated</span><i class="iconoir-sort unsorted"></i></th>
+                                    <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 45%;"><span>Name</span><i class="iconoir-sort unsorted"></i></th>
+                                    <th scope="col" class="table-header" style="width: 15%;"><span>Actions</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tgt-body">
+                                <template id="tgtr-template">
+                                    <tr>
+                                        <td class="tgt-tgid"></td>
+                                        <td class="tgt-slot"></td>
+                                        <td class="tgt-active fs-4"></td>
+                                        <td class="tgt-affiliated fs-4"></td>
+                                        <td class="tgt-name"></td>
+                                        <td>
+                                            <div class="btn-group" role="group" aria-label="TG actions">
+                                                <button type="button" class="btn btn-danger" data-bs-toggle="tooltip"
+                                                    data-bs-placement="top" title="Delete" onclick="tgPromptDelete(this)">
+                                                    <i class="iconoir-trash"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-info" data-bs-toggle="tooltip"
+                                                    data-bs-placement="top" title="Info" onclick="tgPromptInfo(this)">
+                                                    <i class="iconoir-info-circle"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-primary" data-bs-toggle="tooltip"
+                                                    data-bs-placement="top" title="Edit" onclick="tgPromptEdit(this)">
+                                                    <i class="iconoir-edit"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <div class="spinner-border" role="status" id="tgSpinnerTable">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Add/Edit TG Modal -->
+                <div class="modal fade" id="modalTgAdd">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Edit Talkgroup</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form>
+                                    <!-- TGID -->
+                                    <div class="mb-3">
+                                        <label for="addTgFormTGID" class="form-label">TGID (Decimal)</label>
+                                        <input type="number" class="form-control" id="addTgFormTGID" max="16777215" min="0">
+                                        <div class="invalid-feedback">TGID Invalid</div>
+                                    </div>
+                                    <!-- Name -->
+                                    <div class="mb-3">
+                                        <label for="addTgFormName" class="form-label">Name</label>
+                                        <input type="text" class="form-control" id="addTgFormName">
+                                        <div class="invalid-feedback">Name invalid</div>
+                                    </div>
+                                    <!-- Timeslot -->
+                                    <div class="mb-3">
+                                        <label for="addTgFormSlot" class="form-label">Timeslot</label>
+                                        <input type="number" class="form-control" id="addTgFormSlot" max="2" min="1">
+                                        <div class="invalid-feedback">Timeslot Invalid</div>
+                                    </div>
+                                    <!-- Checkboxes for Active/Aff/Parrot -->
+                                    <div class="mb-3 row px-2">
+                                        <!-- Active -->
+                                        <div class="col-md-3 px-1">
+                                            <input class="form-check-input" type="checkbox" value="" id="addTgFormActive">
+                                            <label for="addTgFormActive" class="form-check-label">Active</label>
+                                        </div>
+                                        <!-- Affiliated -->
+                                        <div class="col-md-3 px-1">
+                                            <input class="form-check-input" type="checkbox" value="" id="addTgFormAffiliated">
+                                            <label for="addTgFormAffiliated" class="form-check-label">Affiliated</label>
+                                        </div>
+                                        <!-- Parrot -->
+                                        <div class="col-md-3 px-1">
+                                            <input class="form-check-input" type="checkbox" value="" id="addTgFormParrot">
+                                            <label for="addTgFormParrot" class="form-check-label">Parrot</label>
+                                        </div>
+                                    </div>
+                                    <!-- Template for peer lists below -->
+                                    <template id="peerItemTemplate">
+                                        <div class="p-1 row row-cols-lg-auto g-0">
+                                            <input type="number" class="form-control tgPeerEntry" style="width: 50%; "max="4294967295" min="1">
+                                            <button type="button" class="btn btn-danger mx-2" onclick="delEntry(this)">
+                                                <i class="iconoir-trash"></i>
+                                            </button>
                                         </div>
                                     </template>
+                                    <!-- Exclusions-->
+                                    <div class="mb-3" id="addTgFormExclusions">
+                                        <label>Excluded Peers</label>
+                                        <button type="button" class="btn btn-primary btn-sm m-1" id="addTgFormAddExc" onclick="addPeerEntry(this, 0)">
+                                            <i class="iconoir-plus-circle-solid"></i>
+                                            Add
+                                        </button>
+                                    </div>
+                                    <!-- Inclusions -->
+                                    <div class="mb-3" id="addTgFormInclusions">
+                                        <label>Included Peers</label>
+                                        <button type="button" class="btn btn-primary btn-sm m-1" id="addTgFormAddInc" onclick="addPeerEntry(this, 0)">
+                                            <i class="iconoir-plus-circle-solid"></i>
+                                            Add
+                                        </button>
+                                    </div>
+                                    <!-- Rewrite Rules -->
+                                    <div class="mb-3" id="addTgFormRewrites">
+                                        <label>Rewrite Rules</label>
+                                        <button type="button" class="btn btn-primary btn-sm m-1" id="addTgFormAddRewrite" onclick="addRewriteRule()">
+                                            <i class="iconoir-plus-circle-solid"></i>
+                                            Add
+                                        </button>
+                                        <template id="rewriteItemTemplate">
+                                            <div class="p-1 row g-0 rewriteEntry">
+                                                <div class="col-md-3 px-1">
+                                                    <lable for="tgRwPeer" class="form-label"><small>Peer ID</small></lable>
+                                                    <input type="number" class="form-control tgRwPeer" max="4294967295" min="1">
+                                                </div>
+                                                <div class="col-md-3 px-1">
+                                                    <lable for="tgRwTgid" class="form-label"><small>TGID</small></lable>
+                                                    <input type="number" class="form-control tgRwTgid" max="16777215" min="1">
+                                                </div>
+                                                <div class="col-md-3 px-1">
+                                                    <lable for="tgRwSlot" class="form-label"><small>Timeslot</small></lable>
+                                                <input type="number" class="form-control tgRwSlot" max="2" min="1">
+                                                </div>
+                                                <div class="col-md-1 text-align-bottom d-flex align-items-end px-1">
+                                                    <button type="button" class="btn btn-danger" onclick="delEntry(this)">
+                                                        <i class="iconoir-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                                    onclick="clearTgForm()">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="addTgForm()">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TG Info Modal -->
+                <div class="modal fade" id="modalTgInfo">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Talkgroup Info</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="spinner-border" role="status" id="tgSpinnerInfo">
+                                    <span class="visually-hidden">Loading...</span>
                                 </div>
-                            </form>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
-                                onclick="clearTgForm()">Cancel</button>
-                            <button type="button" class="btn btn-primary" onclick="addTgForm()">Save</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TG Info Modal -->
-            <div class="modal fade" id="modalTgInfo">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Talkgroup Info</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="spinner-border" role="status" id="tgSpinnerInfo">
-                                <span class="visually-hidden">Loading...</span>
+                                <div class="bg-body-tertiary p-2">
+                                    <pre><code id="tgInfoBox"></code></pre>
+                                </div>
                             </div>
-                            <div class="bg-body-tertiary p-2">
-                                <pre><code id="tgInfoBox"></code></pre>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                                    onclick="clearTgInfo()">Close</button>
                             </div>
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
-                                onclick="clearTgInfo()">Close</button>
+                    </div>
+                </div>
+
+                <!-- Delete TG Confirm Modal -->
+                <div class="modal fade" id="modalTgDelete">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Delete TG</h5>
+                            </div>
+                            <div class="modal-body">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                                    onclick="cancelTgDelete()">Cancel</button>
+                                <button type="button" class="btn btn-danger">Delete</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Delete TG Confirm Modal -->
-            <div class="modal fade" id="modalTgDelete">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Delete TG</h5>
-                        </div>
-                        <div class="modal-body">
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
-                                onclick="cancelTgDelete()">Cancel</button>
-                            <button type="button" class="btn btn-danger">Delete</button>
-                        </div>
+                <!-----------------------------------
+                    Peer Management Page & Modals
+                ------------------------------------->
+
+                <div class="d-flex flex-column flex-grow-1 d-none page" id="pagePeers">
+                    <div class="row">
+                        <h3>Peer Connection Management</h3>
+                        <hr>
                     </div>
                 </div>
             </div>
-
-            <!-----------------------------------
-                Peer Management Page & Modals
-            ------------------------------------->
-
-            <div class="col p-3 page overflow-auto" id="pagePeers" style="display: none;">
-                <h3>Peer Connections</h3>
-                <hr>
-            </div>
-
         </div>
     </div>
 
