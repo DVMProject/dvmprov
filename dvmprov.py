@@ -17,10 +17,18 @@ parser.add_argument("-p", "--port", help="port for webserver (default: 8180)", n
 parser.add_argument("-r", "--reverse-proxy", action="store_true", help="notify the webserver it's behind a reverse proxy")
 parser.add_argument("-v", "--debug", help="enable debug logging", action="store_true")
 
-args = parser.parse_args()
+
 
 auth_token = None
 rest_host = None
+
+args = parser.parse_args()
+
+if args.debug:
+    logging.getLogger().setLevel(logging.DEBUG)
+    logging.debug("Debug logging enabled")
+else:
+    logging.getLogger().setLevel(logging.INFO)
 
 """
 Authenticate with the FNE REST API
@@ -63,9 +71,45 @@ def rest_auth():
         logging.error("Caught exception during FNE REST API authentication: %s" % ex)
         exit(1)
 
-if args.debug:
-    logging.getLogger().setLevel(logging.DEBUG)
-    logging.debug("Debug logging enabled")
+"""
+We test our current auth token by requesting the version of the FNE
+
+If this fails, we redo the auth process
+"""
+def test_auth():
+    logging.debug("Testing authentication to FNE instance")
+    # Make sure we've authenticated previously
+    if not auth_token and not rest_host:
+        logging.warning("REST API connection to FNE not initialized")
+        rest_auth()
+        if (test_auth()):
+            return True
+        else:
+            logging.error("Failed to authenticate with FNE")
+            return False
+    
+    # Make the request/post/whatever
+    headers = {}
+    headers['X-DVM-Auth-Token'] = auth_token
+    logging.debug(request.get_data())
+    result = requests.request(
+        method          = 'GET',
+        url             = "http://%s/%s" % (rest_host, "version"),
+        headers         = headers,
+        allow_redirects = False
+    )
+    
+    # Check we were successful
+    resultObj = json.loads(result.content)
+    if "status" not in resultObj:
+        logging.error("Got invalid response when testing authentication to FNE: %s" % result.content)
+        return False
+    elif resultObj["status"] != 200:
+        logging.error("Got status %d when testing authentication to FNE" % resultObj["status"])
+        return False
+    else:
+        logging.debug("Auth test returned OK!")
+        return True
 
 # Init Flash
 app = Flask(
@@ -103,10 +147,23 @@ https://stackoverflow.com/a/36601467/1842613
 @app.route('/rest/<path:path>', methods=['GET', 'POST', 'PUT'])
 def rest(path):
     logging.debug("Got REST %s for %s" % (request.method, path))
+    
     # Make sure we're authenticated
     if not auth_token and not rest_host:
         logging.error("REST API connection to FNE not initialized!")
-        return
+        rest_auth()
+        if not test_auth():
+            logging.error("Failed to authenticate with FNE")
+            exit(1)
+    
+    # Make sure we have valid auth
+    if not test_auth():
+        logging.warning("Authentication token expired, reauthenticating...")
+        rest_auth()
+        if not test_auth():
+            logging.error("Failed to re-authenticated with FNE")
+            exit(1)
+    
     # Make the request/post/whatever
     headers = {k:v for k,v in request.headers if k.lower() != 'host'}
     headers['X-DVM-Auth-Token'] = auth_token
@@ -118,12 +175,14 @@ def rest(path):
         data            = request.get_data(),
         allow_redirects = False
     )
+    
     # Exclude headers in response
     excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']  #NOTE we here exclude all "hop-by-hop headers" defined by RFC 2616 section 13.5.1 ref. https://www.rfc-editor.org/rfc/rfc2616#section-13.5.1
     headers          = [
         (k,v) for k,v in result.raw.headers.items()
         if k.lower() not in excluded_headers
     ]
+    
     # Finalize the response
     response = Response(result.content, result.status_code, headers)
     return response
@@ -138,5 +197,7 @@ if args.reverse_proxy:
 
 # Start serving
 if __name__ == '__main__':
+    # Init REST
     rest_auth()
+    # Serve
     serve(app, host=args.bind, port=args.port)
