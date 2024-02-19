@@ -361,7 +361,7 @@ function ridPromptEdit(element) {
     // Get the parameters from the table
     const editRid = $(element).closest("tr").find(".ut-rid").text();
     const editAlias = $(element).closest("tr").find(".ut-alias").text();
-    const editEnabled = (($(element).closest("tr").find(".ut-enabled").html().includes("checkmark-circle-sharp")) ? true : false);
+    const editEnabled = (($(element).closest("tr").find(".ut-enabled").html().includes("iconoir-check-circle-solid")) ? true : false);
     // Populate the edit modal
     $("#addRidFormRID").val(editRid);
     $("#addRidFormAlias").val(editAlias);
