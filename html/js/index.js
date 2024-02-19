@@ -222,9 +222,6 @@ function addRidToTable(rid, enabled, alias) {
     }
 
     ridRowTemplate.before(newRow);
-
-    // Enable the tooltips on the buttons
-    enableTooltips();
 }
 
 var ridUpdating = false;
@@ -261,6 +258,8 @@ function updateRidTable() {
             }
             // Done
             setTimeout(() => {ridUpdating = false;}, 250);
+            // Enable the tooltips on the buttons
+            enableTooltips();
         }
     })
 }
@@ -491,9 +490,6 @@ function addTgToTable(tgid, slot, name, active, affiliated) {
     }
 
     tgRowTemplate.before(newRow);
-
-    // Enable the tooltips on the buttons
-    enableTooltips();
 }
 
 var tgUpdating = false;
@@ -529,6 +525,8 @@ function updateTgTable() {
             }
             // Done
             setTimeout(() => {tgUpdating = false;}, 250);
+            // Enable the tooltips on the buttons
+            enableTooltips();
         }
     })
 }
