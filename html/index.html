@@ -452,6 +452,50 @@
                         <h3>Peer Connection Management</h3>
                         <hr>
                     </div>
+                    <!-- Header Search Bar and Buttons-->
+                    <div class="row my-2">
+                        <!-- Search Bar -->
+                        <div class="col-md-9">
+                            <input class="form-control" type="text" placeholder="Filter..." oninput="filterTable(this)">
+                        </div>
+                        <!-- Refresh Button -->
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-secondary" onclick="updatePeerTable()">
+                                <i class="iconoir-refresh-circle-solid"></i>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Talkgroup Table -->
+                    <div class="table-responsive mainpage-table">
+                        <table class="table table-hover" id="peert">
+                            <thead>
+                                <tr>
+                                    <th scope="col" onclick="clickSort(this)" data-sort="asc" class="table-header" style="width: 10%;"><span>Peer ID</span><i class="iconoir-sort unsorted"></i></th>
+                                    <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 10%;"><span>Identity</span><i class="iconoir-sort unsorted"></i></th>
+                                    <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 15%;"><span>Address</span><i class="iconoir-sort unsorted"></i></th>
+                                    <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 20%;"><span>Last Heard</span><i class="iconoir-sort unsorted"></i></th>
+                                    <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 15%;"><span>RX Frequency</span><i class="iconoir-sort unsorted"></i></th>
+                                    <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 15%;"><span>TX Frequency</span><i class="iconoir-sort unsorted"></i></th>
+                                </tr>
+                            </thead>
+                            <tbody id="peert-body">
+                                <template id="peertr-template">
+                                    <tr>
+                                        <td class="peert-peerid"></td>
+                                        <td class="peert-identity"></td>
+                                        <td class="peert-address"></td>
+                                        <td class="peert-lastheard"></td>
+                                        <td class="peert-rxfreq"></td>
+                                        <td class="peert-txfreq"></td>
+                                    </tr>
+                                </template>
+                                <div class="spinner-border" role="status" id="peerSpinnerTable">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

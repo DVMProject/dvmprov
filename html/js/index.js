@@ -903,6 +903,70 @@ function tgPromptInfo(element) {
 
 /*****************************************************************************
  * 
+ * TG Management Page Functions
+ * 
+ *****************************************************************************/
+
+const peerTable = $("#peert-body");
+const peerRowTemplate = $("#peertr-template");
+
+// Add table row for TG
+function addPeerToTable(peerid, identity, address, port, lastPing, rxFreq, txFreq) {
+    // Convert the last ping epoch to a timestamp
+    var date = new Date(lastPing * 1000);
+    const timestamp = date.toLocaleString();
+    const newRow = $(peerRowTemplate.html());
+    newRow.find('.peert-peerid').html(peerid);
+    newRow.find('.peert-identity').html(identity);
+    newRow.find('.peert-address').html(`${address}:${port}`);
+    newRow.find('.peert-lastheard').html(timestamp);
+    newRow.find('.peert-rxfreq').html(rxFreq);
+    newRow.find('.peert-txfreq').html(txFreq);
+
+    peerRowTemplate.before(newRow);
+}
+
+var peerUpdating = false;
+
+function updatePeerTable() {
+    // Check flag
+    if (peerUpdating) { return; }
+    peerUpdating = true;
+    // Clear table
+    $("#peert-body tr").remove();
+    // Show loading spinner
+    $("#peerSpinnerTable").show();
+    // Query
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        url: "rest/peer/query",
+        success: function (data) {
+            if (data.status != 200) {
+                console.error("Error getting new Peerss:");
+                console.error(data);
+            } else {
+                console.log("Got new Peer data")
+                data.peers.forEach(entry => {
+                    addPeerToTable(entry.peerId, entry.config.identity, entry.address, entry.port, entry.lastPing, entry.config.rxFrequency, entry.config.txFrequency);
+                });
+                // Hide the loading spinner
+                $("#peerSpinnerTable").hide();
+                // Sort
+                var table = $("#peert");
+                var header = document.querySelectorAll("#peert th")[0];
+                sortTable(table, header);
+            }
+            // Done
+            setTimeout(() => {peerUpdating = false;}, 250);
+            // Enable the tooltips on the buttons
+            enableTooltips();
+        }
+    })
+}
+
+/*****************************************************************************
+ * 
  * Window Onload
  * 
  *****************************************************************************/
