@@ -981,4 +981,5 @@ window.onload = () => {
     updateVersion();
     updateRidTable();
     updateTgTable();
+    updatePeerTable();
 }
