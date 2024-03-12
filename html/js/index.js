@@ -916,12 +916,15 @@ function addPeerToTable(peerid, identity, address, port, lastPing, rxFreq, txFre
     var date = new Date(lastPing * 1000);
     const timestamp = date.toLocaleString();
     const newRow = $(peerRowTemplate.html());
+    // Convert frequencies to MHz
+    const downlink = parseInt(txFreq) / 1e6;
+    const uplink = parseInt(rxFreq) / 1e6;
     newRow.find('.peert-peerid').html(peerid);
     newRow.find('.peert-identity').html(identity);
     newRow.find('.peert-address').html(`${address}:${port}`);
     newRow.find('.peert-lastheard').html(timestamp);
-    newRow.find('.peert-rxfreq').html(rxFreq);
-    newRow.find('.peert-txfreq').html(txFreq);
+    newRow.find('.peert-downlink').html(downlink.toFixed(4));
+    newRow.find('.peert-uplink').html(uplink.toFixed(4));
 
     peerRowTemplate.before(newRow);
 }
