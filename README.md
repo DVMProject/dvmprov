@@ -1,5 +1,7 @@
 # DVM Provisioning Manager
 
+<img src="dvmprov-screen.png" alt="dvmprov screenshot" width="600"/>
+
 Webapp for managing DVM CFNE (Converged FNE) via REST api.
 
 ## Installation
