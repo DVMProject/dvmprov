@@ -39,10 +39,11 @@ def rest_auth():
     # Hash our password
     hashPass = hashlib.sha256(rest_api_password.encode()).hexdigest()
     # Make a request to get our auth token
-    result = requests.request(
-        method = 'PUT',
+    payload = {'auth': hashPass}
+    result = requests.put(
         url = "http://%s:%u/auth" % (rest_api_address, rest_api_port),
-        json = {'auth': hashPass},
+        headers = {'Content-type': 'application/json'},
+        data = json.dumps(payload).encode('utf-8')
     )
     # Debug
     logging.debug("--- REQ ---")
