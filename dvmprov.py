@@ -1,11 +1,15 @@
 from flask import Flask, send_from_directory, request, Response
 from waitress import serve
-from rest import *
 import argparse
 import logging
 import requests
 import hashlib
 import json
+import socket
+
+from requests.packages.urllib3.connection import HTTPConnection
+
+from rest import *
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
@@ -16,8 +20,6 @@ parser.add_argument("-b", "--bind", help="bind address for webserver (default: 1
 parser.add_argument("-p", "--port", help="port for webserver (default: 8180)", nargs='?', default=8180, type=int)
 parser.add_argument("-r", "--reverse-proxy", action="store_true", help="notify the webserver it's behind a reverse proxy")
 parser.add_argument("-v", "--debug", help="enable debug logging", action="store_true")
-
-
 
 auth_token = None
 rest_host = None
@@ -31,6 +33,26 @@ else:
     logging.getLogger().setLevel(logging.INFO)
 
 """
+Special class for making sure HTTP requests don't get segmented (needed until the CFNE HTTP handler gets fixed)
+from https://stackoverflow.com/a/58779308
+"""
+class HTTPAdapterWithOptions(requests.adapters.HTTPAdapter):
+    def __init__(self, *args, **kwargs):
+        self.socket_options = kwargs.pop("socket_options", None)
+        super(HTTPAdapterWithOptions, self).__init__(*args, **kwargs)
+
+    def init_poolmanager(self, *args, **kwargs):
+        if self.socket_options is not None:
+            kwargs["socket_options"] = self.socket_options
+        super(HTTPAdapterWithOptions, self).init_poolmanager(*args, **kwargs)
+
+sesh = requests.Session()
+options = HTTPConnection.default_socket_options + [ (socket.IPPROTO_TCP, socket.TCP_CORK, 1) ]
+adapter = HTTPAdapterWithOptions(socket_options = options)
+sesh.mount("http://", adapter)
+sesh.mount("https://", adapter)
+
+"""
 Authenticate with the FNE REST API
 """
 def rest_auth():
@@ -39,11 +61,10 @@ def rest_auth():
     # Hash our password
     hashPass = hashlib.sha256(rest_api_password.encode()).hexdigest()
     # Make a request to get our auth token
-    payload = {'auth': hashPass}
-    result = requests.put(
+    result = sesh.put(
         url = "http://%s:%u/auth" % (rest_api_address, rest_api_port),
         headers = {'Content-type': 'application/json'},
-        data = json.dumps(payload).encode('utf-8')
+        json = {'auth': hashPass}
     )
     # Debug
     logging.debug("--- REQ ---")
@@ -93,7 +114,7 @@ def test_auth():
     headers = {}
     headers['X-DVM-Auth-Token'] = auth_token
     logging.debug(request.get_data())
-    result = requests.request(
+    result = sesh.request(
         method          = 'GET',
         url             = "http://%s/%s" % (rest_host, "version"),
         headers         = headers,
@@ -169,7 +190,7 @@ def rest(path):
     headers = {k:v for k,v in request.headers if k.lower() != 'host'}
     headers['X-DVM-Auth-Token'] = auth_token
     logging.debug(request.get_data())
-    result = requests.request(
+    result = sesh.request(
         method          = request.method,
         url             = "http://%s/%s" % (rest_host, path),
         headers         = headers,
