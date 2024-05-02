@@ -5,9 +5,6 @@ import logging
 import requests
 import hashlib
 import json
-import socket
-
-from requests.packages.urllib3.connection import HTTPConnection
 
 from rest import *
 
@@ -32,25 +29,8 @@ if args.debug:
 else:
     logging.getLogger().setLevel(logging.INFO)
 
-"""
-Special class for making sure HTTP requests don't get segmented (needed until the CFNE HTTP handler gets fixed)
-from https://stackoverflow.com/a/58779308
-"""
-class HTTPAdapterWithOptions(requests.adapters.HTTPAdapter):
-    def __init__(self, *args, **kwargs):
-        self.socket_options = kwargs.pop("socket_options", None)
-        super(HTTPAdapterWithOptions, self).__init__(*args, **kwargs)
-
-    def init_poolmanager(self, *args, **kwargs):
-        if self.socket_options is not None:
-            kwargs["socket_options"] = self.socket_options
-        super(HTTPAdapterWithOptions, self).init_poolmanager(*args, **kwargs)
-
-sesh = requests.Session()
-options = HTTPConnection.default_socket_options + [ (socket.IPPROTO_TCP, socket.TCP_CORK, 1) ]
-adapter = HTTPAdapterWithOptions(socket_options = options)
-sesh.mount("http://", adapter)
-sesh.mount("https://", adapter)
+# Set TCP_CORK flag globally so we don't fragment HTTP payloads
+requests.packages.urllib3.connection.HTTPConnection.default_socket_options = [(6,3,1)]
 
 """
 Authenticate with the FNE REST API
@@ -61,7 +41,7 @@ def rest_auth():
     # Hash our password
     hashPass = hashlib.sha256(rest_api_password.encode()).hexdigest()
     # Make a request to get our auth token
-    result = sesh.put(
+    result = requests.put(
         url = "http://%s:%u/auth" % (rest_api_address, rest_api_port),
         headers = {'Content-type': 'application/json'},
         json = {'auth': hashPass}
@@ -114,7 +94,7 @@ def test_auth():
     headers = {}
     headers['X-DVM-Auth-Token'] = auth_token
     logging.debug(request.get_data())
-    result = sesh.request(
+    result = requests.request(
         method          = 'GET',
         url             = "http://%s/%s" % (rest_host, "version"),
         headers         = headers,
@@ -190,7 +170,7 @@ def rest(path):
     headers = {k:v for k,v in request.headers if k.lower() != 'host'}
     headers['X-DVM-Auth-Token'] = auth_token
     logging.debug(request.get_data())
-    result = sesh.request(
+    result = requests.request(
         method          = request.method,
         url             = "http://%s/%s" % (rest_host, path),
         headers         = headers,
