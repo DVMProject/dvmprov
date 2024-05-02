@@ -909,7 +909,7 @@ function tgCommit() {
         url: "rest/tg/commit",
         success: function (data) {
             console.log("Commited TGs succesfully");
-            updateRidTable();
+            updateTgTable();
         },
         error: function (xhr, textStatus, thrownError) {
             console.error("Failed to commit TGs");
