@@ -342,16 +342,18 @@ function addRidForm(newForm) {
         contentType: "application/json",
         data: JSON.stringify(postData),
         success: function (data) {
-            console.log(`Successfully added RID ${newRID}`);
-            ridCommit();
-            ridFormSuccess(newForm);
+            if (data.status == 200) {
+                console.log(`Successfully added RID ${newRID}`);
+                ridCommit();
+                ridFormSuccess(newForm);
+            } else {
+                console.error(`Failed to add RID ${newRID}: ${data.message}`);
+                alert(`Failed to add TG ${newRID}: ${data.message}`);
+            }
         },
         error: function(xhr, textStatus, thrownError) {
-            console.error(`Failed to add RID ${newRID}:`);
-            console.error(xhr);
-            console.error(textStatus);
-            console.error(thrownError);
-            alert(`Failed to add TG ${newRID}`);
+            console.error(`Failed to add RID ${newRID}: ${thrownError}`);
+            alert(`Failed to add TG ${newRID}: ${thrownError}`);
         }
     });
     
@@ -409,14 +411,18 @@ function deleteRid(delRid) {
         contentType: "application/json",
         data: JSON.stringify({rid: rid}),
         success: function (data) {
-            console.log(`Successfully deleted RID ${delRid}`);
-            $("#modalRidDelete").modal('hide');
-            ridCommit();
+            if (data.status == 200) {
+                console.log(`Successfully deleted RID ${delRid}`);
+                $("#modalRidDelete").modal('hide');
+                ridCommit();
+            } else {
+                console.error(`Failed to delete RID ${delRid}: ${data.message}`);
+                alert(`Failed to delete RID ${delRid}: ${data.message}`);
+            }
         },
         error: function(xhr, textStatus, thrownError) {
-            console.error(`Failed to delete RID ${delRid}:`);
-            console.error(thrownError);
-            alert(`Failed to delete RID ${delRid}`);
+            console.error(`Failed to delete RID ${delRid}: ${thrownError}`);
+            alert(`Failed to delete RID ${delRid}: ${thrownError}`);
         }
     });
 }
@@ -426,13 +432,17 @@ function ridCommit() {
         type: "GET",
         url: "rest/rid/commit",
         success: function (data) {
-            console.log("Commited RIDs succesfully");
-            updateRidTable();
+            if (data.status == 200) {
+                console.log("Commited RIDs succesfully");
+                updateRidTable();
+            } else {
+                console.error(`Failed to commit RIDs: ${data.message}`);
+                alert(`Failed to commit RIDs: ${data.message}`);
+            }
         },
         error: function (xhr, textStatus, thrownError) {
-            console.error("Failed to commit RIDs");
-            console.error(thrownError);
-            alert("Failed to commit RIDs");
+            console.error(`Failed to commit RIDs: ${thrownError}`);
+            alert(`Failed to commit RIDs: ${thrownError}`);
         }
     });
 }
@@ -757,12 +767,17 @@ function addTgForm(newForm) {
         contentType: "application/json",
         data: JSON.stringify(postData),
         success: function (data) {
-            console.log(`Successfully added TG ${tgid}`);
-            tgCommit();
-            tgFormSuccess(newForm);
+            if (data.status == 200) {
+                console.log(`Successfully added TG ${tgid}`);
+                tgCommit();
+                tgFormSuccess(newForm);
+            } else {
+                console.error(`Failed to add TG ${tgid}: ${data.message}`);
+                alert(`Failed to add TG ${tgid}: ${data.message}`);
+            }
         },
         error: function(xhr, textStatus, thrownError) {
-            console.error(`Failed to add TG ${tgid}:`);
+            console.error(`Failed to add TG ${tgid}: ${thrownError}`);
             console.error(xhr);
             console.error(textStatus);
             console.error(thrownError);
@@ -891,13 +906,17 @@ function deleteTg(delTgid, delSlot) {
             slot: slot
         }),
         success: function (data) {
-            console.log(`Successfully deleted TG ${delTgid}`);
-            $("#modalTgDelete").modal('hide');
-            tgCommit();
+            if (data.status == 200) {
+                console.log(`Successfully deleted TG ${delTgid}`);
+                $("#modalTgDelete").modal('hide');
+                tgCommit();
+            } else {
+                console.error(`Failed to delete TG ${delTgid}: ${data.message}`);
+                alert(`Failed to delete TG ${delTgid}: ${data.message}`);
+            }
         },
         error: function(xhr, textStatus, thrownError) {
-            console.error(`Failed to delete TG ${delTgid}:`);
-            console.error(thrownError);
+            console.error(`Failed to delete TG ${delTgid}: ${thrownError}`);
             alert(`Failed to delete TG ${delTgid}`);
         }
     });
@@ -908,13 +927,17 @@ function tgCommit() {
         type: "GET",
         url: "rest/tg/commit",
         success: function (data) {
-            console.log("Commited TGs succesfully");
-            updateTgTable();
+            if (data.status == 200) {
+                console.log("Commited TGs succesfully");
+                updateTgTable();
+            } else {
+                console.error(`Failed to update TGs: ${data.message}`);
+                alert(`Failed to update TGs: ${data.message}`);
+            }
         },
         error: function (xhr, textStatus, thrownError) {
-            console.error("Failed to commit TGs");
-            console.error(thrownError);
-            alert("Failed to commit TGs");
+            console.error(`Failed to commit TGs: ${thrownError}`);
+            alert(`Failed to commit TGs: ${thrownError}`);
         }
     });
 }
