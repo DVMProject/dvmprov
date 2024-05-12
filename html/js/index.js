@@ -846,6 +846,10 @@ function tgPromptEdit(element) {
                         $("#addTgFormAddRewrite").after(rwTemplate);
                     });
                     // Add the preferred sites
+                    if(entry.config.preferred === undefined) {
+                        // Migration - if sites missing entirely, add as blank
+                        entry.config.preferred = [];
+                    }
                     entry.config.preferred.forEach((val) => {
                         const peerItemTemplate = $($("#peerItemTemplate").html());
                         peerItemTemplate.find(".tgPeerEntry").val(val);
