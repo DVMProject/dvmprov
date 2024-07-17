@@ -1,7 +1,11 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\env",
+    "\\env\\Scripts",
+    "\\html",
+    "\\html\\css"
   ],
-  "SelectedNode": "\\C:\\Users\\David Mason\\Source\\Repos\\dvmprov",
+  "SelectedNode": "\\html\\index.html",
   "PreviewInSolutionExplorer": false
 }

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>DVM Provisioning Manager</title>
+    <!-- Core Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" type="text/css" href="css/custom.css">
+    <!-- Iconoir -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/iconoir-icons/iconoir@main/css/iconoir.css" />
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+</head>
+<body>
+<template id="spinner-small">
+    <div class="spinner-border spinner-border-sm" role="status">
+    </div>
+</template>
+<!-- Navbar -->
+<nav class="navbar fixed-top bg-body-secondary">
+    <div class="container-fluid">
+        <!-- Site Title (Home Link)-->
+        <a class="navbar-brand" href="#">
+            <img src="images/fne.png" alt="Logo" height="32" class="d-inline-block align-text-top">
+            &nbsp;DVM Provisioning Manager
+        </a>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+            <form id="loginForm" onsubmit="return validateForm()">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap core JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ua6k/Gjh1nP4lTZZz9oix1pHjJ0CyFtk3J/tZKw7COmI0CK0GhHJNKBmxY2qXlkM"
+        crossorigin="anonymous"></script>
+<script>
+    function validateForm() {
+        // Fetch input values
+        var username = document.getElementById("username").value;
+        var password = document.getElementById("password").value;
+
+        // Replace with actual validation logic (e.g., check against backend)
+        if (username === "admin" && password === "password") {
+            // Successful login, redirect to index.html
+            window.location.href = "index.html";
+            return false; // Prevent form submission
+        } else {
+            // Show error message or handle invalid login
+            alert("Invalid username or password. Please try again.");
+            return false; // Prevent form submission
+        }
+    }
+</script>
+</body>
+</html>
