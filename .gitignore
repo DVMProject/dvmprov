@@ -8,3 +8,5 @@ lib64
 share/
 pyvenv.cfg
 __pycache__
+/.vs/dvmprov/FileContentIndex
+/.vs/dvmprov/v17
