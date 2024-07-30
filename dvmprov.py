@@ -1,12 +1,17 @@
-from flask import Flask, send_from_directory, request, Response
+from flask import Flask, send_from_directory, request, Response, abort, make_response, send_file
 from waitress import serve
 import argparse
 import logging
 import requests
 import hashlib
 import json
+import xml.etree.cElementTree as ET
+from xml.dom import minidom
+from io import BytesIO
 
 from rest import *
+
+from dvmrest import DVMRest
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
@@ -18,106 +23,102 @@ parser.add_argument("-p", "--port", help="port for webserver (default: 8180)", n
 parser.add_argument("-r", "--reverse-proxy", action="store_true", help="notify the webserver it's behind a reverse proxy")
 parser.add_argument("-v", "--debug", help="enable debug logging", action="store_true")
 
-auth_token = None
-rest_host = None
+fneRest = None
 
 args = parser.parse_args()
 
+# Logging level
 if args.debug:
     logging.getLogger().setLevel(logging.DEBUG)
     logging.debug("Debug logging enabled")
 else:
     logging.getLogger().setLevel(logging.INFO)
 
-# Set TCP_CORK flag globally so we don't fragment HTTP payloads
-requests.packages.urllib3.connection.HTTPConnection.default_socket_options = [(6,3,1)]
-
-"""
-Authenticate with the FNE REST API
-"""
-def rest_auth():
-    global auth_token
-    global rest_host
-    # Hash our password
-    hashPass = hashlib.sha256(rest_api_password.encode()).hexdigest()
-    # Make a request to get our auth token
-    result = requests.put(
-        url = "http://%s:%u/auth" % (rest_api_address, rest_api_port),
-        headers = {'Content-type': 'application/json'},
-        json = {'auth': hashPass}
-    )
-    # Debug
-    logging.debug("--- REQ ---")
-    logging.debug(result.request.url)
-    logging.debug(result.request.headers)
-    logging.debug(result.request.body)
-    logging.debug("--- RESP ---")
-    logging.debug(result.url)
-    logging.debug(result.headers)
-    logging.debug(result.content)
-    # Try to convert the response to JSON
-    try:
-        response = json.loads(result.content)
-        if "status" in response:
-            if response["status"] != 200:
-                logging.error("Got error from FNE REST API during auth exchange: %s" % response["message"])
-                exit(1)
-            if "token" in response:
-                auth_token = response["token"]
-                rest_host = "%s:%u" % (rest_api_address, rest_api_port)
-                logging.info("Successfully authenticated with FNE REST API")
-        else:
-            logging.error("Invalid response received from FNE REST API during auth exchange: %s" % result.content)
-            exit(1)
-    except Exception as ex:
-        logging.error("Caught exception during FNE REST API authentication: %s" % ex)
-        exit(1)
-
-"""
-We test our current auth token by requesting the version of the FNE
-
-If this fails, we redo the auth process
-"""
-def test_auth():
-    logging.debug("Testing authentication to FNE instance")
-    # Make sure we've authenticated previously
-    if not auth_token and not rest_host:
-        logging.warning("REST API connection to FNE not initialized")
-        rest_auth()
-        if (test_auth()):
-            return True
-        else:
-            logging.error("Failed to authenticate with FNE")
-            return False
-    
-    # Make the request/post/whatever
-    headers = {}
-    headers['X-DVM-Auth-Token'] = auth_token
-    logging.debug(request.get_data())
-    result = requests.request(
-        method          = 'GET',
-        url             = "http://%s/%s" % (rest_host, "version"),
-        headers         = headers,
-        allow_redirects = False
-    )
-    
-    # Check we were successful
-    resultObj = json.loads(result.content)
-    if "status" not in resultObj:
-        logging.error("Got invalid response when testing authentication to FNE: %s" % result.content)
-        return False
-    elif resultObj["status"] != 200:
-        logging.error("Got status %d when testing authentication to FNE" % resultObj["status"])
-        return False
-    else:
-        logging.debug("Auth test returned OK!")
-        return True
-
 # Init Flash
 app = Flask(
     __name__,
     static_folder='html'
 )
+
+# Optional reverse proxy fix
+if args.reverse_proxy:
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
+    )
+    logging.info("Reverse proxy support enabled")
+
+"""
+Contacts List Parsing
+"""
+
+def contactsArmada():
+    """
+    Create a contacts list formatted for EFJ armada
+
+    This one is simple, format is ALIAS<tab>RID<newline>
+    """
+
+    # Get RIDs
+    rids = fneRest.get("rest/rid/query")
+
+    # Placeholder for list
+    contacts = ""
+
+    # Iterate
+    for rid in rids["rids"]:
+        if rid["enabled"] and rid["alias"] != "":
+            logging.debug(f'Adding RID {rid["id"]} ({rid["alias"]}) to Armada contacts string')
+            contacts += f'{rid["alias"]}\t{rid["id"]}\n'
+
+    return contacts
+
+def contactsApxUCL(systemName):
+    """
+    Create a contacts list xml file formatted for APX CPS
+
+    This one is annoying but works
+    """
+
+    # This is the basic XML structure
+    xml_root = ET.Element("import_export_doc")
+    ET.SubElement(xml_root, "Version").text = "2"
+    ET.SubElement(xml_root, "Language").text = "en"
+    root = ET.SubElement(xml_root, "Root", {"ExportedAllFeatures":"False", "ConverterGenerated":"False"})
+    recset = ET.SubElement(root, "Recset", {"Name":"Unified Call List", "Id":"2200"})
+
+    # Add each contact
+    rids = fneRest.get("rest/rid/query")
+
+    # Iterate
+    for rid in rids["rids"]:
+        if rid["enabled"] and rid["alias"] != "":
+            logging.debug(f'Adding RID {rid["id"]} ({rid["alias"]}) to APX UCL XML')
+            # New node
+            node = ET.SubElement(recset, "Node", {"Name":"Contacts", "ReferenceKey":rid["alias"]})
+            # Contact name section
+            sectionGeneral = ET.SubElement(node, "Section", {"Name":"General", "id":"10400"})
+            contactName = ET.SubElement(sectionGeneral, "Field", {"Name":"Contact Name"}).text = rid["alias"]
+            # Contact Astro25 ID
+            sectionAstro25 = ET.SubElement(node, "Section", {"Name":"ASTRO 25 Trunking ID", "id":"10401", "Embedded":"True"})
+            embeddedRecset = ET.SubElement(sectionAstro25, "EmbeddedRecset", {"Name":"ASTRO 25 Trunking ID List", "Id":"2201"})
+            embeddedNode = ET.SubElement(embeddedRecset, "EmbeddedNode", {"Name":"ASTRO 25 Trunking ID", "ReferenceKey":str(rid["id"])})
+            embeddedSection = ET.SubElement(embeddedNode, "EmbeddedSection", {"Name":"ASTRO 25 Trunking IDs", "id":"10402"})
+            # Here's the actual ID stuff lol
+            ET.SubElement(embeddedSection, "Field", {"Name":"System Name"}).text = systemName
+            ET.SubElement(embeddedSection, "Field", {"Name":"Custom WACN ID"}).text = "1"
+            ET.SubElement(embeddedSection, "Field", {"Name":"Custom System ID"}).text = "1"
+            ET.SubElement(embeddedSection, "Field", {"Name":"Unit ID"}).text = str(rid["id"])
+
+    # Convert to string
+    xmlString = ET.tostring(xml_root, 'utf-8')
+
+    # Pretty print
+    reparsed = minidom.parseString(xmlString)
+    prettyString = reparsed.toprettyxml(indent="  ")
+    #print(prettyString)
+
+    return prettyString
 
 """
 Root handlers for static pages
@@ -142,64 +143,45 @@ def send_css(path):
     return send_from_directory('html/css', path)
 
 """
-Handler for REST API proxying
-
-https://stackoverflow.com/a/36601467/1842613
+Handlers for API calls
 """
+
 @app.route('/rest/<path:path>', methods=['GET', 'POST', 'PUT'])
 def rest(path):
     logging.debug("Got REST %s for %s" % (request.method, path))
-    
-    # Make sure we're authenticated
-    if not auth_token and not rest_host:
-        logging.error("REST API connection to FNE not initialized!")
-        rest_auth()
-        if not test_auth():
-            logging.error("Failed to authenticate with FNE")
-            exit(1)
-    
-    # Make sure we have valid auth
-    if not test_auth():
-        logging.warning("Authentication token expired, reauthenticating...")
-        rest_auth()
-        if not test_auth():
-            logging.error("Failed to re-authenticated with FNE")
-            exit(1)
-    
-    # Make the request/post/whatever
-    headers = {k:v for k,v in request.headers if k.lower() != 'host'}
-    headers['X-DVM-Auth-Token'] = auth_token
-    logging.debug(request.get_data())
-    result = requests.request(
-        method          = request.method,
-        url             = "http://%s/%s" % (rest_host, path),
-        headers         = headers,
-        data            = request.get_data(),
-        allow_redirects = False
-    )
-    
-    # Exclude headers in response
-    excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']  #NOTE we here exclude all "hop-by-hop headers" defined by RFC 2616 section 13.5.1 ref. https://www.rfc-editor.org/rfc/rfc2616#section-13.5.1
-    headers          = [
-        (k,v) for k,v in result.raw.headers.items()
-        if k.lower() not in excluded_headers
-    ]
-    
-    # Finalize the response
-    response = Response(result.content, result.status_code, headers)
-    return response
+    # Proxy rest
+    return fneRest.rest_proxy(path, request)
 
-# Optional reverse proxy fix
-if args.reverse_proxy:
-    from werkzeug.middleware.proxy_fix import ProxyFix
-    app.wsgi_app = ProxyFix(
-        app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
+@app.route("/contacts/armada")
+def getContactsArmada():
+    return Response(contactsArmada(), mimetype="text/plain")
+
+@app.route("/contacts/apxucl")
+def getContactsApxUCL():
+    # Get the XML string
+    xmlString = contactsApxUCL(request.args.get("system"))
+    
+    # We have to convert to bytes before we can send the file
+    buffer = BytesIO()
+    buffer.write(xmlString.encode('utf-8'))
+    buffer.seek(0)
+
+    # Return XML file
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=f'apx_ucl_dvm_export.xml',
+        mimetype='text/xml'
     )
-    logging.info("Reverse proxy support enabled")
+
+"""
+Main
+"""
 
 # Start serving
 if __name__ == '__main__':
     # Init REST
-    rest_auth()
+    fneRest = DVMRest(rest_api_address, rest_api_port, rest_api_password)
+    fneRest.auth()
     # Serve
     serve(app, host=args.bind, port=args.port)

@@ -447,6 +447,22 @@ function ridCommit() {
     });
 }
 
+function ridExportApxUclModalShow() {
+    $("#modalRidExportAPX").modal('show');
+}
+
+function ridExportApxUclModalClose() {
+    $("#modalRidExportAPX").modal('hide');
+    $("#ridExportSystemName").val("");
+}
+
+function ridExportApxUclUpdateName() {
+    // Get the system name
+    const system = $("#ridExportSystemName").val();
+    // Set the download link
+    $("#ridExportApxUclDownload").attr("href", `/contacts/apxucl?system=${system}`);
+}
+
 /*****************************************************************************
  * 
  * TG Management Page Functions

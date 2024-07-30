@@ -102,23 +102,34 @@
                     </div>
                     <!-- Header Search Bar and Buttons-->
                     <div class="row my-2">
-                        <!-- Search Bar -->
-                        <div class="col-md-9">
-                            <input class="form-control" type="text" placeholder="Filter..." oninput="filterTable(this)">
-                        </div>
-                        <!-- Add Button -->
-                        <div class="col-md-1">
-                            <button type="button" class="btn btn-primary mr-2" data-bs-toggle="modal" data-bs-target="#modalRidAdd">
-                                <i class="iconoir-plus-circle-solid"></i>
-                                Add
-                            </button>
-                        </div>
-                        <!-- Refresh Button -->
-                        <div class="col-md-2">
-                            <button type="button" class="btn btn-secondary" onclick="updateRidTable()">
-                                <i class="iconoir-refresh-circle-solid"></i>
-                                Refresh
-                            </button>
+                        <div class="col">
+                            <div class="d-flex">
+                                <!-- Search Bar -->
+                                <div class="flex-grow-1">
+                                    <input class="form-control" type="text" placeholder="Filter..." oninput="filterTable(this)">
+                                </div>
+                                <!-- Buttons -->
+                                <div class="align-items-end ms-4">
+                                    <!-- Add Button -->
+                                    <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#modalRidAdd">
+                                        <i class="iconoir-plus-circle-solid"></i>
+                                        Add
+                                    </button>
+                                    <!-- Download Button -->
+                                    <button type="button" class="btn btn-primary dropdown-toggle me-2 ms-2" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Download
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="contacts/armada" target="_blank">Armada</a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="ridExportApxUclModalShow()">APX CPS</a></li>
+                                    </ul>
+                                    <!-- Refresh Button -->
+                                    <button type="button" class="btn btn-secondary me-2 ms-2" onclick="updateRidTable()">
+                                        <i class="iconoir-refresh-circle-solid"></i>
+                                        Refresh
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <!-- RID Table -->
@@ -213,6 +224,30 @@
                     </div>
                 </div>
 
+                <!-- Export APX UCL Modal -->
+                <div class="modal fade" id="modalRidExportAPX">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Export APX UCL XML</h5>
+                            </div>
+                            <div class="modal-body">
+                                <form>
+                                    <div class="mb-3">
+                                        <label for="ridExportSystemName" class="form-label">System Name</label>
+                                        <input type="text" class="form-control" id="ridExportSystemName" oninput="ridExportApxUclUpdateName()">
+                                        <div id="ridExportSystemNameHelp" class="form-text">This must match the trunking system name in your APX codeplug</div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="reset" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <a class="btn btn-primary" id="ridExportApxUclDownload" href="#" target="_blank">Download</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-----------------------------------
                     Talkgroup Management Page & Modals
                 ------------------------------------->
@@ -225,7 +260,7 @@
                     <!-- Header Search Bar and Buttons-->
                     <div class="row my-2">
                         <!-- Search Bar -->
-                        <div class="col-md-9">
+                        <div class="col-md-10">
                             <input class="form-control" type="text" placeholder="Filter..." oninput="filterTable(this)">
                         </div>
                         <!-- Add Button -->
@@ -236,7 +271,7 @@
                             </button>
                         </div>
                         <!-- Refresh Button -->
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <button type="button" class="btn btn-secondary" onclick="updateTgTable()">
                                 <i class="iconoir-refresh-circle-solid"></i>
                                 Refresh
