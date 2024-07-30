@@ -60,13 +60,16 @@ def contactsArmada():
     """
 
     # Get RIDs
-    rids = fneRest.get("rest/rid/query")
+    rids = fneRest.get("rest/rid/query")["rids"]
+
+    # Sort by id
+    rids = sorted(rids, key=lambda d: d['id'])
 
     # Placeholder for list
     contacts = ""
 
     # Iterate
-    for rid in rids["rids"]:
+    for rid in rids:
         if rid["enabled"] and rid["alias"] != "":
             logging.debug(f'Adding RID {rid["id"]} ({rid["alias"]}) to Armada contacts string')
             contacts += f'{rid["alias"]}\t{rid["id"]}\n'
@@ -88,10 +91,13 @@ def contactsApxUCL(systemName):
     recset = ET.SubElement(root, "Recset", {"Name":"Unified Call List", "Id":"2200"})
 
     # Add each contact
-    rids = fneRest.get("rest/rid/query")
+    rids = fneRest.get("rest/rid/query")["rids"]
+
+    # Sort by id
+    rids = sorted(rids, key=lambda d: d['id'])
 
     # Iterate
-    for rid in rids["rids"]:
+    for rid in rids:
         if rid["enabled"] and rid["alias"] != "":
             logging.debug(f'Adding RID {rid["id"]} ({rid["alias"]}) to APX UCL XML')
             # New node
