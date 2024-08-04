@@ -595,6 +595,7 @@ function clearTgForm() {
     $("#addTgFormInclusions").children("div").remove();
     $("#addTgFormRewrites").children(".rewriteEntry").remove();
     $("#addTgFormPreferred").children("div").remove();
+    $("#addTgFormAlwaysSend").children("div").remove();
     // Reset invalid classes
     $("#addTgFormTGID").removeClass("is-invalid");
     $("#addTgFormName").removeClass("is-invalid");
@@ -626,6 +627,7 @@ function tgFormSuccess(newForm) {
     $("#addTgFormInclusions").find(".tgPeerEntry").removeClass("is-invalid");
     $("#addTgFormRewrites").find("input").removeClass("is-invalid");
     $("#addTgFormPreferred").find(".tgPeerEntry").removeClass("is-invalid");
+    $("#addTgFormAlwaysSend").find(".tgPeerEntry").removeClass("is-invalid");
     // Make everything valid
     $("#addTgFormTGID").addClass("is-valid");
     $("#addTgFormName").addClass("is-valid");
@@ -637,6 +639,7 @@ function tgFormSuccess(newForm) {
     $("#addTgFormInclusions").find(".tgPeerEntry").addClass("is-valid");
     $("#addTgFormRewrites").find("input").addClass("is-valid");
     $("#addTgFormPreferred").find(".tgPeerEntry").addClass("is-valid");
+    $("#addTgFormAlwaysSend").find(".tgPeerEntry").addClass("is-valid");
     // Send the form and clear after a delay
     setTimeout(() => {
         updateTgTable();
@@ -665,10 +668,12 @@ function addTgForm(newForm) {
     const includeEntries = $("#addTgFormInclusions").find(".tgPeerEntry");
     const rewriteEntries = $("#addTgFormRewrites").find(".rewriteEntry");
     const preferredEntries = $("#addTgFormPreferred").find(".tgPeerEntry");
+    const alwaysSendEntries = $("#addTgFormAlwaysSend").find(".tgPeerEntry");
     var excludes = [];
     var includes = [];
     var rewrites = [];
     var preferred = [];
+    var always = [];
 
     // Validation flag
     valid = true;
@@ -743,6 +748,20 @@ function addTgForm(newForm) {
         });
     }
 
+    // Get always send sites
+    if (alwaysSendEntries.length > 0)
+    {
+        alwaysSendEntries.each((i, element) => {
+            if (!always.includes($(element).val())) {
+                always.push(parseInt($(element).val()));
+            }
+            else {
+                $(element).addClass("is-invalid");
+                valid = false;
+            }
+        });
+    }
+        
     // Validate TGID
     if (isNaN(tgid)) {
         $("#addTgFormTgid").addClass("is-invalid");
@@ -769,7 +788,8 @@ function addTgForm(newForm) {
             inclusion: includes,
             exclusion: excludes,
             rewrite: rewrites,
-            preferred: preferred
+            preferred: preferred,
+            always: always
         },
         source: {
             tgid: tgid,
@@ -870,6 +890,16 @@ function tgPromptEdit(element) {
                         const peerItemTemplate = $($("#peerItemTemplate").html());
                         peerItemTemplate.find(".tgPeerEntry").val(val);
                         $("#addTgFormAddPref").after(peerItemTemplate);
+                    });
+                    // Add the always send sites
+                    if(entry.config.always === undefined) {
+                        // Migration - if sites missing entirely, add as blank
+                        entry.config.always = [];
+                    }
+                    entry.config.always.forEach((val) => {
+                        const peerItemTemplate = $($("#peerItemTemplate").html());
+                        peerItemTemplate.find(".tgPeerEntry").val(val);
+                        $("#addTgFormAddAlways").after(peerItemTemplate);
                     });
                     // Disable slot & TG edit
                     $("#addTgFormTGID").prop("disabled", true);
