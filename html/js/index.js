@@ -67,8 +67,10 @@ function updateVersion(status) {
 function filterTable(element) {
     // Get currentl filter value
     const filterVal = $(element).val().toLowerCase();
+    // Get table to filter
+    const filterTable = $(element).data('filter-table');
     // Find the table rows
-    $(element).parent().parent().parent().find("tbody>tr").filter(function() {
+    $(filterTable).find("tbody>tr").filter(function() {
         $(this).toggle($(this).text().toLowerCase().indexOf(filterVal) > -1);
     });
 }
