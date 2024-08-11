@@ -1004,17 +1004,17 @@ function tgPromptInfo(element) {
 
 /*****************************************************************************
  * 
- * TG Management Page Functions
+ * Peer Management Page Functions
  * 
  *****************************************************************************/
 
 const peerTable = $("#peert-body");
 const peerRowTemplate = $("#peertr-template");
 
-// Add table row for TG
+// Add table row for peer
 function addPeerToTable(peerid, identity, address, port, lastPing, rxFreq, txFreq) {
     // Convert the last ping epoch to a timestamp
-    var date = new Date(lastPing * 1000);
+    var date = new Date(lastPing);
     const timestamp = date.toLocaleString();
     const newRow = $(peerRowTemplate.html());
     // Convert frequencies to MHz
