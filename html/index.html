@@ -507,7 +507,7 @@
                     <div class="row my-2">
                         <!-- Search Bar -->
                         <div class="col-md-9">
-                            <input class="form-control" type="text" placeholder="Filter..." oninput="filterTable(this)" data-filter-table="#peert">
+                            <input class="form-control" type="text" placeholder="Filter..." oninput="filterTable(this)" data-filter-table='["#peert","#peerAclt"]''>
                         </div>
                         <!-- Refresh Button -->
                         <div class="col-md-2">
@@ -517,7 +517,14 @@
                             </button>
                         </div>
                     </div>
-                    <!-- Talkgroup Table -->
+
+                    <!-- Connected Peer Table -->
+                    <div class="row">
+                        <div class="col">
+                            <span class="h5">Connected Peers</span>
+                            <span class="ms-1 text-secondary" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Peers currently connected to the FNE"><i class="iconoir-help-circle-solid"></i></span>
+                        </div>
+                    </div>
                     <div class="table-responsive mainpage-table">
                         <table class="table table-hover" id="peert">
                             <thead>
@@ -547,7 +554,100 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Peer ACL Table -->
+                    <div class="row">
+                        <div class="col d-flex">
+                            <span class="h5">Peer ACL List</span>
+                            <span class="ps-2 text-secondary" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Peers configured in the FNE peer ACL list"><i class="iconoir-help-circle-solid"></i></span>
+                            <!-- Add Button -->
+                            <span type="button" class="btn btn-primary btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#modalPeerAclAdd">
+                                <i class="iconoir-plus-circle-solid"></i>
+                                Add
+                            </span>
+                        </div>
+                    </div>
+                    <div class="table-responsive mainpage-table">
+                        <table class="table table-hover" id="peerAclt">
+                            <thead>
+                                <tr>
+                                    <th scope="col" onclick="clickSort(this)" data-sort="asc" class="table-header" style="width:10%"><span>Peer ID</span><i class="iconoir-sort unsorted"></i></th>
+                                    <th scope="col" class="table-header" style="width: 10%;"><span>Actions</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="peerAclt-body">
+                                <template id="peerAcltr-template">
+                                    <tr>    
+                                        <td class="peerAclt-peerid"></td>
+                                        <td class="peerAclt-actions">
+                                            <div class="btn-group" role="group" aria-label="Peer ACL actions">
+                                                <button type="button" class="btn btn-danger" data-bs-toggle="tooltip"
+                                                    data-bs-placement="top" title="Delete" onclick="peerAclPromptDelete(this)">
+                                                    <i class="iconoir-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <div class="spinner-border" role="status" id="peerAclSpinnerTable">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
+
+                <!-- Add/Edit RID Modal -->
+                <div class="modal fade" id="modalPeerAclAdd">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Add Peer to ACL</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form>
+                                    <div class="mb-3">
+                                        <label for="addPeerAclFormPeerID" class="form-label">Peer ID</label>
+                                        <input type="number" class="form-control" id="addPeerAclFormPeerID" max="16777215" min="0">
+                                        <div class="invalid-feedback">Peer ID invalid</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="addPeerAclFormPassword" class="form-label">Password</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="addPeerAclFormPassword">
+                                            <button class="btn btn-outline-secondary" type="button" onclick="generatePeerPassword()">Generate</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                                    onclick="clearPeerAclForm()">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="addPeerAclForm()">Add</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delete Peer ACL Confirm Modal -->
+                <div class="modal fade" id="modalPeerAclDelete">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Delete Peer ACL Entry</h5>
+                            </div>
+                            <div class="modal-body">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                                    onclick="cancelPeerAclDelete()">Cancel</button>
+                                <button type="button" class="btn btn-danger">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>

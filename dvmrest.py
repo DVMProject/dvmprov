@@ -2,6 +2,7 @@ import hashlib
 import requests
 import logging
 import json
+import time
 from flask import request, Response
 from requests.packages.urllib3.connection import HTTPConnection, socket
 
@@ -29,50 +30,70 @@ class DVMRest:
         adapter = HTTPAdapterWithSocketOptions(socket_options=options)
         self.session.mount("http://", adapter)
         # Authenticated status
+        self.authInProgress = False
         self.token = None
         self.authenticated = False
 
     def auth(self):
-        try:
-            # Make a request to get the auth token
-            result = self.session.put(
-                url = "http://%s:%u/auth" % (self.host, self.port),
-                headers = {'Content-type': 'application/json'},
-                json = {'auth': self.hashPass}
-            )
-            # Debug
-            logging.debug("--- REQ ---")
-            logging.debug(result.request.url)
-            logging.debug(result.request.headers)
-            logging.debug(result.request.body)
-            logging.debug("--- RESP ---")
-            logging.debug(result.url)
-            logging.debug(result.headers)
-            logging.debug(result.content)
-            # Try to convert the response to JSON
-            response = json.loads(result.content)
-            if "status" in response:
-                if response["status"] != 200:
-                    logging.error("Got error from REST API at %s:%u during auth exchange: %s" % (self.host, self.port, response["message"]))
+        # Wait for auth if in progress
+        if self.authInProgress:
+            logging.warn("Auth already in progress!")
+            timeout = time.time() + 0.5
+            while not self.authenticated:
+                if time.time() > timeout:
+                    break
+            return self.authenticated
+        else:
+            # Capture the auth process
+            self.authInProgress = True
+            self.authenticated = False
+            try:
+                # Make a request to get the auth token
+                result = self.session.put(
+                    url = "http://%s:%u/auth" % (self.host, self.port),
+                    headers = {'Content-type': 'application/json'},
+                    json = {'auth': self.hashPass}
+                )
+                # Debug
+                logging.debug("--- REQ ---")
+                logging.debug(result.request.url)
+                logging.debug(result.request.headers)
+                logging.debug(result.request.body)
+                logging.debug("--- RESP ---")
+                logging.debug(result.url)
+                logging.debug(result.headers)
+                logging.debug(result.content)
+                # Try to convert the response to JSON
+                response = json.loads(result.content)
+                if "status" in response:
+                    if response["status"] != 200:
+                        logging.error("Got error from REST API at %s:%u during auth exchange: %s" % (self.host, self.port, response["message"]))
+                        self.authInProgress = False
+                        return False
+                    if "token" in response:
+                        self.token = response["token"]
+                        self.authenticated = True
+                        logging.info("Successfully authenticated with REST API at %s:%u" % (self.host, self.port))
+                        self.authInProgress = False
+                        return True
+                else:
+                    logging.error("Invalid response received from REST API at %s:%u during auth exchange: %s" % (self.host, self.port, result.content))
+                    self.authInProgress = False
                     return False
-                if "token" in response:
-                    self.token = response["token"]
-                    self.authenticated = True
-                    logging.info("Successfully authenticated with REST API at %s:%u" % (self.host, self.port))
-                    return True
-            else:
-                logging.error("Invalid response received from REST API at %s:%u during auth exchange: %s" % (self.host, self.port, result.content))
+            except Exception as ex:
+                logging.error("Caught exception during REST API authentication to %s:%u: %s" % (self.host, self.port, ex))
+                self.authInProgress = False
                 return False
-        except Exception as ex:
-            logging.error("Caught exception during REST API authentication to %s:%u: %s" % (self.host, self.port, ex))
-            return False
 
     def test(self):
         logging.debug("Testing authentication to REST endpoint")
+        # Wait for auth
         # Make sure we've authenticated previously
         if not self.authenticated and not self.token:
             logging.warning("REST API connection to %s:%u not initialized" % (self.host, self.port))
-            self.auth()
+            if not self.auth():
+                logging.error("REST authentication failed")
+                return False
         try:
             # Test connection
             headers = {'X-DVM-Auth-Token': self.token}
@@ -104,6 +125,7 @@ class DVMRest:
     def get(self, path):
         logging.debug("Got REST GET for %s" % path)
 
+        # Make sure we're authenticated
         if not self.test():
             logging.warn("REST authentication failed, re-initializing")
             if not self.auth():

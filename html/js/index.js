@@ -69,10 +69,19 @@ function filterTable(element) {
     const filterVal = $(element).val().toLowerCase();
     // Get table to filter
     const filterTable = $(element).data('filter-table');
-    // Find the table rows
-    $(filterTable).find("tbody>tr").filter(function() {
-        $(this).toggle($(this).text().toLowerCase().indexOf(filterVal) > -1);
-    });
+    // Check if array
+    if (Array.isArray(filterTable)) {
+        filterTable.forEach(table => {
+            $(table).find("tbody>tr").filter(function () {
+                $(this).toggle($(this).text().toLowerCase().indexOf(filterVal) > -1);
+            });
+        });
+    } else {
+        // Filter single table rows
+        $(filterTable).find("tbody>tr").filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(filterVal) > -1);
+        });
+    }
 }
 
 /*****************************************************************************
@@ -824,7 +833,7 @@ function addTgForm(newForm) {
     });
 }
 
-function addPeerEntry(element, peerId)
+function addTgPeerEntry(element, peerId)
 {
     const peerTemplate = $($("#peerItemTemplate").html());
     peerTemplate.find(".tgPeerEntry").prop("placeholder", peerId);
@@ -837,6 +846,10 @@ function addRewriteRule()
     $("#addTgFormAddRewrite").after(rwTemplate);
 }
 
+/**
+ * Delete a generic row element from a list
+ * @param {element} element 
+ */
 function delEntry(element)
 {
     $(element).closest(".row").remove();
@@ -1010,8 +1023,18 @@ function tgPromptInfo(element) {
 
 const peerTable = $("#peert-body");
 const peerRowTemplate = $("#peertr-template");
+const peerAclRowTemplate = $("#peerAcltr-template");
 
-// Add table row for peer
+/**
+ * Add a peer to the connected peers table
+ * @param {int} peerid 
+ * @param {string} identity 
+ * @param {string} address 
+ * @param {int} port 
+ * @param {int} lastPing 
+ * @param {float} rxFreq 
+ * @param {float} txFreq 
+ */
 function addPeerToTable(peerid, identity, address, port, lastPing, rxFreq, txFreq) {
     // Convert the last ping epoch to a timestamp
     var date = new Date(lastPing);
@@ -1030,8 +1053,184 @@ function addPeerToTable(peerid, identity, address, port, lastPing, rxFreq, txFre
     peerRowTemplate.before(newRow);
 }
 
-var peerUpdating = false;
+/**
+ * Add a peer to the peer ACL table
+ * @param {int} peerid 
+ */
+function addPeerToACL(peerid) {
+    const newRow = $(peerAclRowTemplate.html());
+    newRow.find('.peerAclt-peerid').html(peerid);
 
+    peerAclRowTemplate.before(newRow);
+}
+
+/**
+ * Generate a random 16-byte base64 password for the new peer
+ */
+function generatePeerPassword() {
+    // Generate 16-byte base64 password
+    var randomArray = new Uint8Array(16);
+    window.crypto.getRandomValues(randomArray);
+    const password = btoa(String.fromCharCode.apply(null, randomArray));
+    // Fill field
+    $("#addPeerAclFormPassword").val(password);
+}
+
+/**
+ * Clear the add peer ACL entry form
+ */
+function clearPeerAclForm() {
+    $("#addPeerAclFormPeerID").val("");
+    $("#addPeerAclFormPassword").val("");
+}
+
+/**
+ * Submit the add peer ACL form and add a new peer to the ACL list
+ */
+function addPeerAclForm() {
+    // Get peerID and password
+    const peerId = parseInt($("#addPeerAclFormPeerID").val());
+    const password = $("#addPeerAclFormPassword").val();
+
+    // Validation flag
+    valid = true;
+
+    // Validate TGID
+    if (isNaN(peerId)) {
+        $("#addPeerAclFormPeerID").addClass("is-invalid");
+        valid = false;
+    }
+
+    // If we had any invalid data, stop
+    if (!valid) {
+        return;
+    }
+
+    // Prepare data
+    postData = {
+        peerId: peerId,
+        password: password
+    };
+
+    // Put
+    $.ajax({
+        type: "PUT",
+        url: "rest/peer/add",
+        contentType: "application/json",
+        data: JSON.stringify(postData),
+        success: function (data) {
+            if (data.status == 200) {
+                console.log(`Successfully added Peer ${peerId}`);
+                peerAclCommit();
+                peerAclFormSuccess();
+            } else {
+                console.error(`Failed to add peer ${peerId}: ${data.message}`);
+                alert(`Failed to add peer ${peerId}: ${data.message}`);
+            }
+        },
+        error: function(xhr, textStatus, thrownError) {
+            console.error(`Failed to add peer ${peerId}: ${thrownError}`);
+            console.error(xhr);
+            console.error(textStatus);
+            console.error(thrownError);
+            alert(`Failed to add peer ${peerId}`);
+        }
+    });
+}
+
+function peerAclCommit() {
+    $.ajax({
+        type: "GET",
+        url: "rest/peer/commit",
+        success: function (data) {
+            if (data.status == 200) {
+                console.log("Commited peers succesfully");
+                updatePeerTable();
+            } else {
+                console.error(`Failed to update peers: ${data.message}`);
+                alert(`Failed to update peers: ${data.message}`);
+            }
+        },
+        error: function (xhr, textStatus, thrownError) {
+            console.error(`Failed to commit peers: ${thrownError}`);
+            alert(`Failed to commit peers: ${thrownError}`);
+        }
+    });
+}
+
+function peerAclFormSuccess() {
+    // Clear any invalids
+    $("#addPeerAclFormPeerID").removeClass("is-invalid");
+    $("#addPeerAclFormPassword").removeClass("is-invalid");
+    // Make everything valid
+    $("#addPeerAclFormPeerID").addClass("is-valid");
+    $("#addPeerAclFormPassword").addClass("is-valid");
+    // Send the form and clear after a delay
+    setTimeout(() => {
+        updatePeerTable();
+        $("#modalPeerAclAdd").modal('hide');
+        clearPeerAclForm();
+    }, 300);
+}
+
+function peerAclPromptDelete(element) {
+    const delPeerId = $(element).closest("tr").find(".peerAclt-peerid").text();
+    // Update the delete modal text
+    $("#modalPeerAclDelete").find(".modal-body").html(`Delete peer ID ${delPeerId} from ACL?`);
+    // Update the delete function onclick
+    $("#modalPeerAclDelete").find(".btn-danger").off('click').on('click', () => {
+        deletePeerAcl(delPeerId);
+    });
+
+    // Show the modal
+    $("#modalPeerAclDelete").modal('show');
+}
+
+function cancelPeerAclDelete() {
+    $("#modalPeerAclDelete").find(".modal-body").html('');
+    $("#modalPeerAclDelete").find(".btn-danger").off('click');
+}
+
+/**
+ * Delete the specified peer from the peer ACL
+ * @param {int} peer peer ID to delete
+ */
+function deletePeerAcl(peer) {
+    const peerId = parseInt(peer);
+    if (isNaN(peerId)) {
+        console.error("Peer ID to delete is NaN: " + peer);
+        return;
+    }
+    $.ajax({
+        type: "PUT",
+        url: "rest/peer/delete",
+        contentType: "application/json",
+        data: JSON.stringify({
+            peerId: peerId
+        }),
+        success: function (data) {
+            if (data.status == 200) {
+                console.log(`Successfully deleted peer ${peer}`);
+                $("#modalPeerAclDelete").modal('hide');
+                peerAclCommit();
+            } else {
+                console.error(`Failed to delete peer ${peer}: ${data.message}`);
+                alert(`Failed to delete peer ${peer}: ${data.message}`);
+            }
+        },
+        error: function(xhr, textStatus, thrownError) {
+            console.error(`Failed to delete peer ${peer}: ${thrownError}`);
+            alert(`Failed to delete peer ${peer}`);
+        }
+    });
+}
+
+var peerUpdating = false;
+var peerAclUpdating = false;
+
+/**
+ * Update the connected peer and peer ACL tables
+ */
 function updatePeerTable() {
     // Check flag
     if (peerUpdating) { return; }
@@ -1040,14 +1239,14 @@ function updatePeerTable() {
     $("#peert-body tr").remove();
     // Show loading spinner
     $("#peerSpinnerTable").show();
-    // Query
+    // Query connected peers
     $.ajax({
         type: "GET",
         dataType: "json",
         url: "rest/peer/query",
         success: function (data) {
             if (data.status != 200) {
-                console.error("Error getting new Peerss:");
+                console.error("Error getting new Peers:");
                 console.error(data);
             } else {
                 console.log("Got new Peer data")
@@ -1063,10 +1262,39 @@ function updatePeerTable() {
             }
             // Done
             setTimeout(() => {peerUpdating = false;}, 250);
-            // Enable the tooltips on the buttons
-            enableTooltips();
         }
-    })
+    });
+    // Do ACL list next
+    if (peerAclUpdating) { return; }
+    peerAclUpdating = true;
+    // Clear table
+    $("#peerAclt-body tr").remove();
+    // Show loading spinner
+    $("#peerAclSpinnerTable").show();
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        url: "rest/peer/list",
+        success: function (data) {
+            if (data.status != 200) {
+                console.error("Error getting peer ACL:");
+                console.error(data);
+            } else {
+                console.log("Got new Peer ACL")
+                data.peers.forEach(entry => {
+                    addPeerToACL(entry.peerId);
+                });
+                // Hide the loading spinner
+                $("#peerAclSpinnerTable").hide();
+                // Sort
+                var table = $("#peerAclt");
+                var header = document.querySelectorAll("#peerAclt th")[0];
+                sortTable(table, header);
+            }
+            // Done
+            setTimeout(() => {peerAclUpdating = false;}, 250);
+        }
+    });
 }
 
 /*****************************************************************************
