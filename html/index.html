@@ -284,10 +284,11 @@
                             <thead>
                                 <tr>
                                     <th scope="col" onclick="clickSort(this)" data-sort="asc" class="table-header" style="width: 10%;"><span>TGID</span><i class="iconoir-sort unsorted"></i></th>
+                                    <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 25%;"><span>Name</span><i class="iconoir-sort unsorted"></i></th>
+                                    <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 20%;"><span>Alias</span><i class="iconoir-sort unsorted"></i></th>
                                     <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 8%;"><span>Slot</span><i class="iconoir-sort unsorted"></i></th>
                                     <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 10%;"><span>Active</span><i class="iconoir-sort unsorted"></i></th>
                                     <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 12%;"><span>Affiliated</span><i class="iconoir-sort unsorted"></i></th>
-                                    <th scope="col" onclick="clickSort(this)" data-sort="none" class="table-header" style="width: 45%;"><span>Name</span><i class="iconoir-sort unsorted"></i></th>
                                     <th scope="col" class="table-header" style="width: 15%;"><span>Actions</span></th>
                                 </tr>
                             </thead>
@@ -295,10 +296,11 @@
                                 <template id="tgtr-template">
                                     <tr>
                                         <td class="tgt-tgid"></td>
+                                        <td class="tgt-name"></td>
+                                        <td class="tgt-alias"></td>
                                         <td class="tgt-slot"></td>
                                         <td class="tgt-active fs-4"></td>
                                         <td class="tgt-affiliated fs-4"></td>
-                                        <td class="tgt-name"></td>
                                         <td>
                                             <div class="btn-group" role="group" aria-label="TG actions">
                                                 <button type="button" class="btn btn-danger" data-bs-toggle="tooltip"
@@ -345,6 +347,12 @@
                                     <div class="mb-3">
                                         <label for="addTgFormName" class="form-label">Name</label>
                                         <input type="text" class="form-control" id="addTgFormName">
+                                        <div class="invalid-feedback">Name invalid</div>
+                                    </div>
+                                    <!-- Alias -->
+                                    <div class="mb-3">
+                                        <label for="addTgFormAlias" class="form-label">Alias</label>
+                                        <input type="text" class="form-control" id="addTgFormAlias">
                                         <div class="invalid-feedback">Name invalid</div>
                                     </div>
                                     <!-- Timeslot -->

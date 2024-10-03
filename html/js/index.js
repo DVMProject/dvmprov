@@ -498,11 +498,12 @@ $('#modalTgAdd').on('shown.bs.modal', () => {
 });
 
 // Add table row for TG
-function addTgToTable(tgid, slot, name, active, affiliated) {
+function addTgToTable(tgid, slot, name, alias, active, affiliated) {
     const newRow = $(tgRowTemplate.html());
     newRow.find('.tgt-tgid').html(tgid);
     newRow.find('.tgt-slot').html(slot);
     newRow.find('.tgt-name').html(name);
+    newRow.find('.tgt-alias').html(alias);
     // Active Checkmark
     if (active)
     {
@@ -551,7 +552,7 @@ function updateTgTable() {
             } else {
                 console.log("Got new TG data")
                 data.tgs.forEach(entry => {
-                    addTgToTable(entry.source.tgid, entry.source.slot, entry.name, entry.config.active, entry.config.affiliated);
+                    addTgToTable(entry.source.tgid, entry.source.slot, entry.name, entry.alias, entry.config.active, entry.config.affiliated);
                 });
                 // Hide the loading spinner
                 $("#tgSpinnerTable").hide();
@@ -598,6 +599,7 @@ function clearTgForm() {
     // Blank the values
     $("#addTgFormTGID").val("");
     $("#addTgFormName").val("");
+    $("#addTgFormAlias").val("");
     $("#addTgFormSlot").val("");
     $("#addTgFormActive").prop("checked", false);
     $("#addTgFormAffiliated").prop("checked", false);
@@ -610,6 +612,7 @@ function clearTgForm() {
     // Reset invalid classes
     $("#addTgFormTGID").removeClass("is-invalid");
     $("#addTgFormName").removeClass("is-invalid");
+    $("#addTgFormAlias").removeClass("is-invalid");
     $("#addTgFormSlot").removeClass("is-invalid");
     $("#addTgFormActive").removeClass("is-invalid");
     $("#addTgFormAffiliated").removeClass("is-invalid");
@@ -617,6 +620,7 @@ function clearTgForm() {
     // Reset valid classes
     $("#addTgFormTGID").removeClass("is-valid");
     $("#addTgFormName").removeClass("is-valid");
+    $("#addTgFormAlias").removeClass("is-valid");
     $("#addTgFormSlot").removeClass("is-valid");
     $("#addTgFormActive").removeClass("is-valid");
     $("#addTgFormAffiliated").removeClass("is-valid");
@@ -630,6 +634,7 @@ function tgFormSuccess(newForm) {
     // Clear any invalids
     $("#addTgFormTGID").removeClass("is-invalid");
     $("#addTgFormName").removeClass("is-invalid");
+    $("#addTgFormAlias").removeClass("is-invalid");
     $("#addTgFormSlot").removeClass("is-invalid");
     $("#addTgFormActive").removeClass("is-invalid");
     $("#addTgFormAffiliated").removeClass("is-invalid");
@@ -642,6 +647,7 @@ function tgFormSuccess(newForm) {
     // Make everything valid
     $("#addTgFormTGID").addClass("is-valid");
     $("#addTgFormName").addClass("is-valid");
+    $("#addTgFormAlias").addClass("is-valid");
     $("#addTgFormSlot").addClass("is-valid");
     $("#addTgFormActive").addClass("is-valid");
     $("#addTgFormAffiliated").addClass("is-valid");
@@ -669,6 +675,7 @@ function addTgForm(newForm) {
     // Get main values from form
     const tgid = parseInt($("#addTgFormTGID").val());
     const name = $("#addTgFormName").val();
+    const alias = $("#addTgFormAlias").val();
     const slot = parseInt($("#addTgFormSlot").val());
     const active = $("#addTgFormActive").prop("checked");
     const affiliated = $("#addTgFormAffiliated").prop("checked");
@@ -792,6 +799,7 @@ function addTgForm(newForm) {
 
     postData = {
         name: name,
+        alias: alias,
         config: {
             active: active,
             affiliated: affiliated,
@@ -874,6 +882,7 @@ function tgPromptEdit(element) {
                     $("#addTgFormTGID").val(editTgid);
                     $("#addTgFormSlot").val(editSlot);
                     $("#addTgFormName").val(entry.name);
+                    $("#addTgFormAlias").val(entry.alias);
                     $("#addTgFormActive").prop("checked", entry.config.active);
                     $("#addTgFormAffiliated").prop("checked", entry.config.affiliated);
                     $("#addTgFormParrot").prop("checked", entry.config.parrot);
